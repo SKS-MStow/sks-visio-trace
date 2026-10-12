@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F335C">
+<title>App 2 · Drawer — SKS Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500;700;900&family=Mulish:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+<link rel="stylesheet" href="shared/vt.css">
+<style>
+  [hidden] { display: none !important; }
+  body { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; height: 100vh; height: 100dvh;
+    -webkit-touch-callout: none; background: var(--bg); }
+  button { cursor: pointer; border: 0; background: none; padding: 0; }
+  .ib { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 22px; flex-shrink: 0; }
+
+  /* ---------- top bar: ☰ · title · View */
+  .top { display: flex; align-items: center; gap: 4px; min-width: 0; background: var(--sks-navy); color: #fff;
+    padding: calc(4px + var(--safe-top)) calc(8px + var(--safe-right)) 4px calc(4px + var(--safe-left)); min-height: 56px; }
+  .top .ib:active, .top .ib:focus-visible { background: rgba(255, 255, 255, .12); outline: none; }
+  .ttl { flex: 1; min-width: 0; text-align: left; padding: 4px 6px; border-radius: 8px; min-height: 44px; display: flex; flex-direction: column; justify-content: center; color: #fff; }
+  .ttl .t1 { font: 700 16.5px/1.2 var(--font-head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ttl .t1 .code { font-weight: 900; letter-spacing: .02em; }
+  .ttl .t1 .dot { opacity: .5; margin: 0 2px; }
+  .ttl .t2 { font-size: 11.5px; font-weight: 600; color: #c9d1e3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .ttl .t2 .hold { color: #f2d49b; }
+  .vbtn { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px 0 11px; border-radius: 20px; color: #fff;
+    border: 1.5px solid rgba(255, 255, 255, .35); font-weight: 700; font-size: 13.5px; flex-shrink: 0; }
+  .vbtn[aria-expanded="true"] { background: #fff; color: var(--sks-navy); border-color: #fff; }
+  .vbtn .msi { font-size: 20px; }
+
+  /* ---------- type row and page chips */
+  .typerow { position: relative; height: 46px; background: #fff; border-bottom: 1px solid var(--line); overflow: hidden; }
+  .typerow > div { position: absolute; inset: 0; display: flex; align-items: stretch; transition: transform .2s ease, opacity .2s ease; }
+  .types { padding: 0 calc(6px + var(--safe-right)) 0 calc(6px + var(--safe-left)); }
+  .types button { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; font-size: 13.5px;
+    color: var(--text-2); position: relative; white-space: nowrap; }
+  .types button .msi { font-size: 19px; }
+  .types button .n { font-size: 11px; color: var(--text-3); font-weight: 700; }
+  .types button[aria-current="true"] { color: var(--sks-navy); }
+  .types button[aria-current="true"]::after { content: ''; position: absolute; left: 22%; right: 22%; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--sks-purple); }
+  .pages { gap: 8px; align-items: center; padding: 0 calc(10px + var(--safe-right)) 0 calc(4px + var(--safe-left)); overflow-x: auto; scrollbar-width: none; transform: translateY(100%); opacity: 0; }
+  .pages::-webkit-scrollbar { display: none; }
+  .typerow.open .types { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+  .typerow.open .pages { transform: none; opacity: 1; }
+  .typerow:not(.open) .pages { pointer-events: none; }
+  .pages .back { display: inline-flex; align-items: center; gap: 2px; height: 44px; padding: 0 8px 0 4px; font-weight: 800; font-size: 13px; color: var(--sks-navy); flex-shrink: 0; }
+  .pages .back .msi { font-size: 20px; }
+  .pg { flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px; border-radius: 17px; background: var(--sks-light);
+    border: 1px solid var(--line); font-size: 13px; font-weight: 600; color: var(--sks-navy); white-space: nowrap; position: relative; }
+  .pg::before { content: ''; position: absolute; inset: -5px 0; }
+  .pg b { font: 800 12.5px var(--font-head); letter-spacing: .02em; }
+  .pg[aria-current="true"] { background: var(--sks-navy); color: #fff; border-color: var(--sks-navy); }
+  .pg .hold { font-size: 10.5px; font-weight: 800; color: var(--warn); background: #fbf3e2; padding: 2px 6px; border-radius: 9px; }
+
+  /* ---------- stage, panes */
+  .stage { position: relative; overflow: hidden; min-height: 0; }
+  .pane { position: absolute; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+  .pane.hidden { display: none; }
+  .pane .vh { flex: 1; min-height: 0; position: relative; }
+  .pane-hd { height: 34px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 2px 0 12px; background: #fff; border-bottom: 1px solid var(--line);
+    font-size: 12.5px; color: var(--text-2); min-width: 0; }
+  .pane-hd .code { font: 800 12.5px var(--font-head); color: var(--sks-navy); letter-spacing: .02em; flex-shrink: 0; }
+  .pane-hd .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto; }
+  .pane-hd .note { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; color: var(--warn); font-weight: 700; font-size: 12px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto; }
+  .pane-hd .note .msi { font-size: 16px; }
+  .pane-hd .sp { flex: 1; }
+  .pane-hd .note:not(:empty) + .sp { display: none; }
+  .pane-hd:has(.note:not(:empty)) .nm { display: none; }
+  .pane-hd .ib { width: 34px; height: 34px; color: var(--text-2); }
+  .pane-hd .ib .msi { font-size: 19px; }
+  .pane.single .pane-hd { display: none; }
+  .pane.main.split { border-bottom: 0; }
+  .divider { position: absolute; background: var(--line-strong); }
+  .divider.hidden { display: none; }
+  /* PiP: a card in a corner, drag to move, tap to swap */
+  .pane.pip { border-radius: 12px; box-shadow: var(--shadow-lg); border: 2px solid #fff; z-index: 5; cursor: grab; touch-action: none; }
+  .pane.pip .vh { pointer-events: none; }
+  .pane.pip .pane-hd { height: 28px; padding: 0 8px; gap: 6px; }
+  .pane.pip .pane-hd .ib { display: none; }
+  .pane.pip .pane-hd .nm { display: none; }
+  .pane.pip .pane-hd .note { margin-left: 0; font-size: 11px; }
+  .pane.pip .swap-hint { display: inline-flex; margin-left: auto; color: var(--text-3); }
+  .swap-hint { display: none; }
+  .swap-hint .msi { font-size: 16px; }
+  .pane.pip.dragging { cursor: grabbing; transition: none; }
+  .pane.pip.snap { transition: left .18s ease, top .18s ease; }
+
+  /* ---------- selection: bottom bar on phone, docked card on desktop */
+  .sel { background: #fff; z-index: 8; }
+  .sel .line { display: flex; align-items: center; gap: 8px; min-height: 56px; padding: 6px 4px 6px 14px; min-width: 0; }
+  .sel .what { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; text-align: left; min-height: 44px; }
+  .sel .what .tx { min-width: 0; display: flex; flex-direction: column; }
+  .sel .what .a { font: 700 14px/1.25 var(--font-head); color: var(--sks-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sel .what .b { font-size: 12.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+  .tagbox { font: 800 13px var(--font-head); color: #fff; background: var(--sks-navy); padding: 5px 8px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; letter-spacing: .02em; }
+  .sel .ib { color: var(--text-2); }
+  .sel .chev .msi { transition: transform .18s; }
+  .sel.expanded .chev .msi { transform: rotate(180deg); }
+  .sel .more { display: none; padding: 0 14px 14px; max-height: 38vh; overflow-y: auto; }
+  .sel.expanded .more { display: block; }
+  .rows { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px; text-align: left; font-size: 13px; color: var(--sks-navy); font-weight: 600; background: #fff; }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row .to { margin-left: auto; color: var(--text-2); white-space: nowrap; }
+  .row.dim { opacity: .45; }
+  .ends { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .ends button { background: var(--sks-light); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; text-align: left; min-height: 48px; font-size: 12px; color: var(--text-2); }
+  .ends button b { display: block; font: 800 13.5px var(--font-head); color: var(--sks-navy); }
+  .ends .msi { color: var(--sks-purple); }
+  .kv { font-size: 13px; color: var(--text-2); line-height: 1.5; margin: 0 0 8px; }
+  .kv b { color: var(--sks-navy); }
+  .sub-h { font: 700 11px var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); margin: 4px 0 6px; }
+
+  /* ---------- drawer */
+  .scrim { position: fixed; inset: 0; background: rgba(20, 30, 52, .42); z-index: 50; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .scrim.on { opacity: 1; pointer-events: auto; }
+  .drawer { position: fixed; top: 0; bottom: 0; left: 0; width: 360px; max-width: 86vw; z-index: 51; background: var(--sks-light); transform: translateX(-104%);
+    transition: transform .22s cubic-bezier(.2, .7, .2, 1); display: flex; flex-direction: column; box-shadow: var(--shadow-lg); touch-action: pan-y;
+    padding-left: var(--safe-left); }
+  .drawer * { touch-action: pan-y; }
+  .drawer.on { transform: none; }
+  .drawer.dragging { transition: none; }
+  .dr-hd { background: #fff; padding: calc(10px + var(--safe-top)) 6px 14px 16px; border-bottom: 1px solid var(--line); }
+  .dr-top { display: flex; align-items: center; justify-content: space-between; }
+  .dr-top img { height: 30px; width: auto; display: block; }
+  .dr-top .ib { color: var(--text-2); }
+  .job { margin-top: 10px; }
+  .job .num { font: 800 12px var(--font-head); color: var(--sks-purple); letter-spacing: .06em; }
+  .job .nm { font: 700 16px/1.25 var(--font-head); color: var(--sks-navy); margin-top: 2px; }
+  .job .site { font-size: 12.5px; color: var(--text-2); margin-top: 2px; font-weight: 600; }
+  .dr-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; margin-left: -10px; }
+  .dr-body { flex: 1; overflow-y: auto; padding: 6px 14px calc(18px + var(--safe-bottom)); overscroll-behavior: contain; }
+  .grp-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 16px 4px 6px; }
+  .grp-h h3 { font: 700 11.5px var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+  .grp-h .lnk { font-size: 12.5px; font-weight: 700; color: var(--sks-purple); min-height: 32px; padding: 0 2px; }
+  .grp { background: #fff; border-radius: 12px; border: 1px solid var(--line); overflow: hidden; }
+  .li { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 50px; padding: 6px 14px; text-align: left; font-size: 14px; font-weight: 600; color: var(--sks-navy); }
+  .li + .li { border-top: 1px solid var(--line); }
+  .li .lab { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .li .lab small { font-size: 12px; color: var(--text-3); font-weight: 600; margin-top: 1px; }
+  .li .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 22px; padding: 0 5px; border-radius: 5px; background: var(--sks-navy);
+    color: #fff; font: 800 12px/1 var(--font-head); flex-shrink: 0; }
+  .li .ico { font-size: 21px; color: var(--text-2); width: 28px; text-align: center; }
+  .li[aria-checked="false"] .badge { background: #fff; color: var(--text-3); box-shadow: inset 0 0 0 1.5px var(--line-strong); }
+  .li[aria-checked="false"] .lab > span { color: var(--text-3); }
+  .sw { width: 42px; height: 26px; border-radius: 13px; background: var(--line-strong); position: relative; flex-shrink: 0; transition: background .15s; }
+  .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: transform .15s; }
+  .li[aria-checked="true"] .sw { background: var(--sks-purple); }
+  .li[aria-checked="true"] .sw::after { transform: translateX(16px); }
+  .li .tick { color: var(--sks-purple); font-size: 22px; visibility: hidden; }
+  .li[aria-checked="true"] .tick { visibility: visible; }
+  .foot { font-size: 12px; color: var(--text-3); margin: 6px 4px 0; line-height: 1.4; }
+  .reset { width: 100%; margin-top: 20px; min-height: 48px; border-radius: 12px; border: 1.5px solid var(--sks-navy); color: var(--sks-navy); font-weight: 800; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 8px; background: #fff; }
+
+  /* ---------- View popover */
+  .popscrim { position: fixed; inset: 0; z-index: 40; display: none; }
+  .popscrim.on { display: block; }
+  .pop { position: fixed; z-index: 41; width: 320px; max-width: calc(100vw - 16px); background: #fff; border-radius: 14px; box-shadow: var(--shadow-lg);
+    border: 1px solid var(--line); display: none; flex-direction: column; max-height: min(72vh, 600px); overflow: hidden; transform-origin: top right; }
+  .pop.on { display: flex; animation: popin .14s ease-out; }
+  @keyframes popin { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+  .pop .ph { padding: 14px 14px 4px; }
+  .pop .ph h4 { font: 700 11.5px var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); margin: 0 0 8px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--sks-light); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg button { min-height: 44px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 12px; font-weight: 700; color: var(--text-2); }
+  .seg button .msi { font-size: 20px; }
+  .seg button[aria-checked="true"] { background: #fff; color: var(--sks-navy); box-shadow: 0 1px 3px rgba(31, 51, 92, .14); }
+  .pop .pb { overflow-y: auto; padding: 4px 6px 10px; }
+  .pop .sh { font: 700 11.5px var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); padding: 12px 8px 4px; }
+  .pop .ty { font-size: 12.5px; font-weight: 800; color: var(--text-2); padding: 10px 8px 2px; display: flex; align-items: center; gap: 6px; }
+  .pop .ty .msi { font-size: 17px; }
+  .cmp { width: 100%; display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 4px 8px 4px 10px; border-radius: 10px; text-align: left; font-size: 13.5px; color: var(--sks-navy); font-weight: 600; }
+  .cmp.nest { padding-left: 32px; }
+  .cmp b { font: 800 12.5px var(--font-head); letter-spacing: .02em; flex-shrink: 0; }
+  .cmp .nm { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cmp .msi.k { font-size: 19px; color: var(--sks-purple); }
+  .cmp .tick { color: var(--sks-purple); visibility: hidden; }
+  .cmp[aria-checked="true"] { background: var(--sks-light); }
+  .cmp[aria-checked="true"] .tick { visibility: visible; }
+  .cmp:disabled { opacity: .45; cursor: default; }
+  .cmp .tag { font-size: 10.5px; font-weight: 800; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
+
+  /* ---------- radial (only while open) */
+  .rm-catch { position: absolute; inset: 0; z-index: 30; touch-action: none; display: none; }
+  .rm-catch.on { display: block; }
+  .rm { position: absolute; transform: translate(-50%, -50%) scale(.82); opacity: 0; transition: transform .12s ease-out, opacity .12s ease-out; }
+  .rm.on { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  .rm svg { position: absolute; inset: 0; overflow: visible; filter: drop-shadow(0 8px 22px rgba(31, 51, 92, .26)); }
+  .rm-w { fill: #fff; stroke: var(--bg); stroke-width: 3; transition: fill .08s; }
+  .rm-w.hov { fill: var(--sks-navy); }
+  .rm-w.done { fill: var(--sks-purple); }
+  .rm-hub { fill: var(--sks-light); stroke: var(--bg); stroke-width: 3; }
+  .rm-l { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center;
+    pointer-events: none; color: var(--sks-navy); font: 700 11px/1.12 var(--font); }
+  .rm-l .msi { font-size: 22px; }
+  .rm-l.hov, .rm-l.done { color: #fff; }
+  .rm-c { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    pointer-events: none; color: var(--sks-navy); }
+  .rm-c .t { font: 800 12.5px/1.1 var(--font-head); }
+  .rm-c .h { font-size: 10px; line-height: 1.2; color: var(--text-2); margin-top: 2px; font-weight: 600; }
+  .rm-dot { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; border: 2px solid var(--sks-purple); background: #fff; pointer-events: none; }
+
+  /* desktop: the selection is a compact card docked bottom-left of the drawing */
+  @media (min-width: 769px) {
+    .sel { position: fixed; left: 16px; bottom: calc(16px + var(--safe-bottom)); width: 400px; border-radius: 14px; box-shadow: var(--shadow-lg); border: 1px solid var(--line); }
+    .sel .more { max-height: 46vh; }
+    .typerow .types { justify-content: flex-start; padding-left: 12px; }
+    .types button { flex: 0 0 auto; padding: 0 18px; }
+    .types button[aria-current="true"]::after { left: 14px; right: 14px; }
+  }
+
+  @media (max-width: 768px) {
+    .drawer { width: 82vw; max-width: 82vw; }
+    .sel { border-top: 1px solid var(--line); box-shadow: 0 -2px 10px rgba(31, 51, 92, .06); padding-bottom: var(--safe-bottom); }
+    .vbtn { padding: 0 12px 0 9px; height: 40px; gap: 4px; }
+    .ttl .t1 { font-size: 15.5px; }
+    .types button { font-size: 13px; gap: 5px; }
+    .types button .n { display: none; }
+    .pop { right: 8px !important; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="ib" id="menuBtn" aria-label="Open menu" aria-controls="drawer" aria-expanded="false"><span class="msi">menu</span></button>
+  <button class="ttl" id="ttl" title="Fit the drawing">
+    <span class="t1" id="tMain"></span>
+    <span class="t2" id="tCap"></span>
+  </button>
+  <button class="vbtn" id="viewBtn" aria-haspopup="dialog" aria-expanded="false" aria-label="View"><span class="msi" id="viewIco">crop_square</span><span class="lbl">View</span></button>
+</header>
+
+<nav class="typerow" id="typeRow" aria-label="Drawing types">
+  <div class="types" id="types"></div>
+  <div class="pages" id="pages"></div>
+</nav>
+
+<main class="stage" id="stage">
+  <section class="pane" id="paneA" data-key="A">
+    <div class="pane-hd"><span class="code"></span><span class="nm"></span><span class="note"></span><span class="sp"></span>
+      <span class="swap-hint"><span class="msi">swap_vert</span></span>
+      <button class="ib" data-act="swap" aria-label="Swap drawings"><span class="msi">swap_vert</span></button>
+      <button class="ib" data-act="fit" aria-label="Fit drawing"><span class="msi">fit_screen</span></button></div>
+    <div class="vh" id="vA"></div>
+  </section>
+  <section class="pane" id="paneB" data-key="B">
+    <div class="pane-hd"><span class="code"></span><span class="nm"></span><span class="note"></span><span class="sp"></span>
+      <span class="swap-hint"><span class="msi">swap_vert</span></span>
+      <button class="ib" data-act="swap" aria-label="Swap drawings"><span class="msi">swap_vert</span></button>
+      <button class="ib" data-act="fit" aria-label="Fit drawing"><span class="msi">fit_screen</span></button></div>
+    <div class="vh" id="vB"></div>
+  </section>
+  <div class="divider hidden" id="divider"></div>
+  <div class="rm-catch" id="rmCatch"></div>
+</main>
+
+<section class="sel" id="sel" hidden aria-live="polite"></section>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Menu" aria-hidden="true">
+  <div class="dr-hd">
+    <div class="dr-top"><img src="assets/sks-logo.svg" alt="SKS Technologies"><button class="ib" id="drClose" aria-label="Close menu"><span class="msi">close</span></button></div>
+    <div class="job"><div class="num" id="jNum"></div><div class="nm" id="jName"></div><div class="site" id="jSite"></div></div>
+    <div class="dr-meta"><a class="back-link" href="./"><span class="msi">arrow_back</span>All options</a><span class="opt-mark">App 2 · Drawer</span></div>
+  </div>
+  <div class="dr-body" id="drBody"></div>
+</aside>
+
+<div class="popscrim" id="popScrim"></div>
+<div class="pop" id="pop" role="dialog" aria-label="View"></div>
+
+<script src="shared/vt.js"></script>
+<script>
+(async () => {
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const isPhone = () => matchMedia('(max-width: 768px)').matches;
+
+  const T = await VT.load('data/drawing.json');
+  window.T = T;
+  const P = T.job.pages;
+  const KIND = { schematic: 'Schematic', elevation: 'Elevation', plan: 'Floor plan' };
+  const ON = { schematic: 'the schematic', elevation: 'the elevation', plan: 'the floor plan' };
+  const MAXK = { schematic: 1.6, elevation: 0.75, plan: 0.75 };
+  const CLS = Object.keys(T.classes);
+  const typeOf = (id) => T.job.types.find((t) => t.pages.includes(id));
+  const kindOf = (id) => T.kindOf(id);
+  const tc = (t) => String(t || '').toLowerCase().replace(/(^|[\s(/-])([a-z])/g, (m, a, b) => a + b.toUpperCase()).replace(/\b(\d+)p\b/gi, '$1P');
+
+  $('#jNum').textContent = T.project.number;
+  $('#jName').textContent = T.project.name.replace(/\w\S*/g, (w) => w[0] + w.slice(1).toLowerCase());
+  $('#jSite').textContent = T.project.site.replace(/\w\S*/g, (w) => w[0] + w.slice(1).toLowerCase()) + ' · Rev ' + T.project.rev;
+
+  // ------------------------------------------------------------------ state (+ deep link)
+  const st = {
+    main: 'A', layout: 'single', corner: 'br', compareAuto: true,
+    hidden: [], layersOff: {}, zones: true, clouds: true, depth: 'cable',
+    sel: null, selFrom: null, expanded: false, rowOpen: null,
+  };
+  const H = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+  const okSheet = (id) => id && T.sheets[id];
+  const firstSheet = okSheet(H.s) ? H.s : 'AVS01';
+  function defaultCompare(id) {
+    const k = kindOf(id);
+    const want = k === 'schematic' ? 'elevation' : 'schematic';
+    return T.counterpart(id, want) || (k === 'plan' ? 'AVS01' : T.counterpart(id, 'plan')) || 'AVF01';
+  }
+  const firstCmp = okSheet(H.c) && H.c !== firstSheet ? H.c : defaultCompare(firstSheet);
+  if (okSheet(H.c)) st.compareAuto = false;
+  if (['single', 'split', 'pip'].includes(H.l)) st.layout = H.l;
+  if (['cable', 'connections', 'path'].includes(H.d)) st.depth = H.d;
+
+  // ------------------------------------------------------------------ viewers
+  const stage = $('#stage'), paneA = $('#paneA'), paneB = $('#paneB'), divider = $('#divider');
+  const pane = (k) => (k === 'A' ? paneA : paneB);
+  const otherKey = (k) => (k === 'A' ? 'B' : 'A');
+  const selEl = $('#sel');
+  function insetsFor(k) {
+    // keep fits and zooms clear of whatever floats over this pane (PiP card, desktop selection card)
+    return () => {
+      const vh = pane(k).querySelector('.vh').getBoundingClientRect();
+      const out = { top: 0, right: 0, bottom: 0, left: 0 };
+      const over = [];
+      if (st.layout === 'pip' && k === st.main) over.push(pane(otherKey(k)).getBoundingClientRect());
+      if (!isPhone() && !selEl.hidden) over.push(selEl.getBoundingClientRect());
+      over.forEach((r) => {
+        if (r.right <= vh.left || r.left >= vh.right || r.bottom <= vh.top || r.top >= vh.bottom) return;
+        if (r.top - vh.top > vh.bottom - r.bottom) out.bottom = Math.max(out.bottom, vh.bottom - r.top + 8);
+        else out.top = Math.max(out.top, r.bottom - vh.top + 8);
+      });
+      return out;
+    };
+  }
+  const VA = VT.create(T, $('#vA'), { sheet: firstSheet, autoSelect: false, insets: insetsFor('A') });
+  const VB = VT.create(T, $('#vB'), { sheet: firstCmp, autoSelect: false, insets: insetsFor('B') });
+  const viewer = (k) => (k === 'A' ? VA : VB);
+  window.VA = VA; window.VB = VB;
+  await Promise.all([VA.ready, VB.ready]);
+  const M = () => viewer(st.main), C = () => viewer(otherKey(st.main));
+  window.app2 = { st, M, C, viewer, get v() { return M(); } };
+
+  // ------------------------------------------------------------------ filters (shared by both panes)
+  function applyFilters() {
+    [VA, VB].forEach((v) => {
+      v.setHidden(st.hidden);
+      v.setOverlay({ zones: st.zones, clouds: st.clouds });
+      Object.entries(st.layersOff).forEach(([id, list]) => v.setLayersOff(list, id));
+    });
+  }
+
+  // ------------------------------------------------------------------ selection
+  const sheetCables = (sheet, tag) => (T.sheets[sheet].cables || []).filter((c) => c.ends.some((e) => e.dev === tag));
+  const visible = (c) => !st.hidden.includes(c.cls);
+  function focusFor(ref, sheet, depth) {
+    const s = T.sheets[sheet];
+    if (s.kind !== 'schematic') return T.focusFor(ref);
+    const classes = CLS.filter((c) => !st.hidden.includes(c));
+    if (ref.kind === 'cable' || ref.kind === 'port') {
+      const id = ref.kind === 'cable' ? ref.id : ref.cable;
+      if (depth === 'cable') return T.focusFor({ kind: 'cable', id });
+      return T.trace(id, { depth: depth === 'path' ? Infinity : 1, classes });
+    }
+    if (ref.kind === 'device') {
+      if (depth === 'path') return Object.assign(T.trace(ref.tag, { classes }), { primary: ref.tag });
+      if (depth === 'connections') return Object.assign(T.trace(ref.tag, { depth: 2, classes }), { primary: ref.tag });
+      const cs = sheetCables(sheet, ref.tag);
+      const on = (t) => (s.devices || []).some((d) => d.tag === t);
+      return {
+        cables: cs.map((c) => c.id),
+        devices: [ref.tag, ...cs.map((c) => T.peer(c, ref.tag).dev).filter(on)],
+        ports: cs.flatMap((c) => c.ends.filter((e) => e.port).map((e) => e.dev + '|' + e.port)),
+        services: (s.services || []).filter((x) => x.dev === ref.tag).map((x) => x.id),
+        primary: ref.tag,
+      };
+    }
+    return T.focusFor(ref);
+  }
+  const notes = { A: '', B: '' };
+  function normal(ref) {
+    if (!ref) return null;
+    if (ref.kind === 'port' && !ref.cable) return { kind: 'device', tag: ref.tag };
+    if (ref.kind === 'device') return { kind: 'device', tag: ref.tag };
+    return ref;
+  }
+  function select(ref, from, o) {
+    o = o || {};
+    ref = normal(ref);
+    st.sel = ref; st.selFrom = ref ? from : null; st.oneOff = o.depth || null;
+    if (!ref) st.expanded = false;
+    notes.A = notes.B = '';
+    const V = viewer(from || st.main), O = viewer(otherKey(from || st.main));
+    if (!ref) { VA.clear(); VB.clear(); }
+    else {
+      V.select(ref, { focus: focusFor(ref, V.sheet, o.depth || st.depth), zoom: !!o.zoom, zoomOpts: { maxK: MAXK[kindOf(V.sheet)] } });
+      relate();
+    }
+    renderSel(); renderPaneHeads(); syncHash();
+  }
+  // the other pane shows where the selection is on its drawing
+  function relate() {
+    const k = st.selFrom, ref = st.sel;
+    if (!ref || !k) return;
+    const O = viewer(otherKey(k)), V = viewer(k);
+    notes[otherKey(k)] = '';
+    if (st.layout === 'single') { O.clear(); return; }
+    const r = T.relate(ref, V.sheet, O.sheet);
+    O.select(null);
+    if (!r) return;
+    const f = r.focus;
+    const any = (f.devices || []).length || (f.boxes || []).length || (f.cables || []).length || f.outline;
+    if (any) O.focus(f, { zoom: true, zoomOpts: { maxK: MAXK[kindOf(O.sheet)] } });
+    if (r.missing.length) {
+      const m = r.missing;
+      notes[otherKey(k)] = `${m.slice(0, 2).join(', ')}${m.length > 2 ? ` +${m.length - 2}` : ''} ${m.length > 1 ? "aren't" : "isn't"} on ${ON[kindOf(O.sheet)]}`;
+    }
+  }
+
+  VA.on('tap', (e) => tapped('A', e));
+  VB.on('tap', (e) => tapped('B', e));
+  function tapped(k, e) {
+    if (st.layout === 'pip' && k !== st.main) return;
+    closeRow();
+    // near the whole-sheet view a phone can't read the trace, so land on it; once zoomed in, stay put
+    const V = viewer(k), s = T.sheets[V.sheet], r = V.svg.getBoundingClientRect();
+    const fit = Math.min(r.width / s.w, r.height / s.h);
+    select(e.hit, k, { zoom: !!e.hit && V.cam.k < fit * 1.8 });
+  }
+
+  // ------------------------------------------------------------------ selection card / bar
+  function selInfo() {
+    const ref = st.sel, sheet = viewer(st.selFrom || st.main).sheet, s = T.sheets[sheet];
+    const depth = st.oneOff || st.depth;
+    const f = viewer(st.selFrom || st.main).focused;
+    if (ref.kind === 'cable' || ref.kind === 'port') {
+      const c = T.cables[ref.kind === 'cable' ? ref.id : ref.cable];
+      const [a, b] = c.ends;
+      const extra = depth !== 'cable' && f ? ` · ${depth === 'path' ? 'whole path' : 'connections'}, ${f.cables.length} cables` : '';
+      return {
+        head: `<span class="chip-id">${esc(c.id)}</span>`,
+        a: `${esc(c.badge)} · ${esc(T.classes[c.cls].label)}${extra}`,
+        b: `${esc(a.dev)} ${esc(a.port && a.port !== '-' ? a.port : '')} → ${esc(b.dev)} ${esc(b.port && b.port !== '-' ? b.port : '')}`,
+        more: `<div class="ends"><button data-dev="${esc(a.dev)}"><b>${esc(a.dev)}</b>${esc(a.port || '')}</button><span class="msi">arrow_forward</span><button data-dev="${esc(b.dev)}"><b>${esc(b.dev)}</b>${esc(b.port || '')}</button></div>
+          <div class="sub-h">Cable label</div><div class="label-strip">${esc(T.label(c))}</div>`,
+      };
+    }
+    if (ref.kind === 'device') {
+      const d = T.deviceOn(sheet, ref.tag) || (s.kind === 'elevation' ? T.devices[ref.tag] : null) || {};
+      const mm = [d.make, d.model].filter(Boolean).join(' ') || d.desc || ref.tag;
+      if (s.kind === 'schematic') {
+        const cs = sheetCables(sheet, ref.tag);
+        const count = depth === 'cable' ? `${cs.length} connection${cs.length === 1 ? '' : 's'}` : `${depth === 'path' ? 'whole path' : 'connections'} · ${f ? f.cables.length : 0} cables`;
+        return {
+          head: `<span class="tagbox">${esc(ref.tag)}</span>`, a: esc(mm), b: count,
+          more: cs.length ? `<div class="sub-h">Connections</div><div class="rows">${cs.map((c) => {
+            const mine = T.mine(c, ref.tag), far = T.peer(c, ref.tag);
+            return `<button class="row${visible(c) ? '' : ' dim'}" data-cable="${c.id}"><span class="chip-id">${c.id}</span>${esc(mine.port && mine.port !== '-' ? mine.port : c.badge)}<span class="to">→ ${esc(far.dev)}</span></button>`;
+          }).join('')}</div>` : `<p class="kv">No cables drawn on ${esc(sheet)}${P[sheet] && P[sheet].hold ? ' · survey hold' : ''}.</p>`,
+        };
+      }
+      const mk = (s.marks || []).find((m) => m.tag === ref.tag);
+      return { head: `<span class="tagbox">${esc(ref.tag)}</span>`, a: esc(mm), b: `On the wall${mk ? ' · ' + esc(mk.text) : ''}`,
+        more: `<p class="kv">${esc(d.desc || '')}</p><p class="kv">Press and hold the unit to find it on the schematic or plan.</p>` };
+    }
+    if (ref.kind === 'symbol') {
+      const sym = (s.symbols || []).find((x) => x.tag === ref.tag && x.room === ref.room) || {};
+      const room = (s.rooms || []).find((r) => r.id === ref.room);
+      return { head: `<span class="tagbox">${esc(ref.tag)}</span>`, a: esc(sym.kind || ref.tag), b: room ? `Room ${esc(room.id)} · ${esc(tc(room.name.replace(/^\S+ - /, '')))}` : 'Level 9',
+        more: `<p class="kv">${(sym.tags || [ref.tag]).map((t) => `<b>${esc(t)}</b>`).join(', ')} · room ${esc(ref.room || '—')}</p>` };
+    }
+    if (ref.kind === 'room') {
+      const room = (s.rooms || []).find((r) => r.id === ref.id) || {};
+      const n = (s.symbols || []).filter((x) => x.room === ref.id).length;
+      return { head: `<span class="tagbox">${esc(ref.id)}</span>`, a: esc(tc((room.name || '').replace(/^\S+ - /, ''))), b: `Room ${esc(room.number || '')} · ${n} items`,
+        more: `<p class="kv">${esc(room.note || '')}</p>` };
+    }
+    return null;
+  }
+  function renderSel() {
+    const ref = st.sel;
+    const was = !selEl.hidden;
+    if (!ref) { selEl.hidden = true; if (was) afterChrome(); return; }
+    const i = selInfo();
+    selEl.hidden = false;
+    selEl.classList.toggle('expanded', st.expanded);
+    selEl.innerHTML = `<div class="line">
+        <button class="what" data-act="expand">${i.head}<span class="tx"><span class="a">${i.a}</span><span class="b">${i.b}</span></span></button>
+        <button class="ib chev" data-act="expand" aria-label="${st.expanded ? 'Less' : 'More'}" aria-expanded="${st.expanded}"><span class="msi">expand_less</span></button>
+        <button class="ib" data-act="clear" aria-label="Clear selection"><span class="msi">close</span></button>
+      </div><div class="more">${i.more || ''}</div>`;
+    afterChrome();
+  }
+  selEl.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.cable) return select({ kind: 'cable', id: b.dataset.cable }, st.selFrom, { zoom: true });
+    if (b.dataset.dev) return select({ kind: 'device', tag: b.dataset.dev }, st.selFrom, { zoom: true });
+    if (b.dataset.act === 'expand') { st.expanded = !st.expanded; renderSel(); }
+    if (b.dataset.act === 'clear') select(null);
+  });
+  // chrome around the stage changed size: re-place panes on the next frame
+  function afterChrome() { requestAnimationFrame(layout); }
+
+  // ------------------------------------------------------------------ title + type row
+  function renderTitle() {
+    const id = M().sheet, p = P[id];
+    $('#tMain').innerHTML = `<span class="code">${esc(id)}</span><span class="dot"> · </span>${esc(p.name)}`;
+    $('#tCap').innerHTML = `${KIND[kindOf(id)]}${p.hold ? ' · <span class="hold">Survey hold</span>' : ''} · ${esc(T.project.number)}`;
+    document.title = `${id} · App 2 · Drawer`;
+  }
+  function renderTypes() {
+    const cur = typeOf(M().sheet).id;
+    $('#types').innerHTML = T.job.types.map((t) => `<button data-type="${t.id}" aria-current="${t.id === cur}"><span class="msi">${t.icon}</span>${esc(t.id === 'plan' ? 'Plans' : t.label)}<span class="n">${t.pages.length}</span></button>`).join('');
+  }
+  function openRow(typeId) {
+    const t = T.job.types.find((x) => x.id === typeId);
+    st.rowOpen = typeId;
+    $('#pages').innerHTML = `<button class="back" data-act="back" aria-label="Back to drawing types"><span class="msi">chevron_left</span>${esc(t.short)}</button>` +
+      t.pages.map((id) => `<button class="pg" data-page="${id}" aria-current="${id === M().sheet}"><b>${id}</b>${esc(P[id].name)}${P[id].hold ? '<span class="hold">Hold</span>' : ''}</button>`).join('');
+    $('#typeRow').classList.add('open');
+    const cur = $('#pages [aria-current="true"]');
+    if (cur) cur.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+  }
+  function closeRow() { if (!st.rowOpen) return; st.rowOpen = null; $('#typeRow').classList.remove('open'); }
+  $('#types').addEventListener('click', (e) => { const b = e.target.closest('[data-type]'); if (b) openRow(b.dataset.type); });
+  $('#pages').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.act === 'back') return closeRow();
+    if (b.dataset.page) { closeRow(); openMain(b.dataset.page); }
+  });
+
+  async function openMain(id) {
+    if (id === M().sheet) return;
+    select(null);
+    if (id === C().sheet) { st.main = otherKey(st.main); st.compareAuto = true; }   // it was the compare doc: just swap
+    else await M().setSheet(id);
+    if (st.compareAuto || C().sheet === M().sheet) { const d = defaultCompare(id); if (C().sheet !== d) await C().setSheet(d, { fit: true }); }
+    renderAll();
+  }
+  async function setCompare(id) {
+    if (id === M().sheet) return;
+    st.compareAuto = false;
+    await C().setSheet(id);
+    if (st.layout === 'single') st.layout = 'split';
+    layout(); relate(); renderPaneHeads(); renderSel(); renderPop(); syncHash();
+  }
+
+  // ------------------------------------------------------------------ layout: single · split · PiP
+  function place(el, r) { Object.assign(el.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' }); }
+  function pipRect(corner) {
+    const W = stage.clientWidth, Hh = stage.clientHeight, m = 10;
+    const w = Math.round(Math.min(W * 0.4, 520)), h = Math.round(w * 0.72) + 28;
+    return { x: corner[1] === 'l' ? m : W - w - m, y: corner[0] === 't' ? m : Hh - h - m, w, h };
+  }
+  let lastSize = '';
+  function layout() {
+    const W = stage.clientWidth, Hh = stage.clientHeight;
+    const A = pane(st.main), B = pane(otherKey(st.main));
+    A.className = 'pane main ' + (st.layout === 'split' ? 'split' : 'single'); B.className = 'pane ' + (st.layout === 'single' ? 'hidden' : st.layout === 'pip' ? 'pip' : 'split');
+    divider.classList.add('hidden');
+    place(A, { x: 0, y: 0, w: W, h: Hh });
+    if (st.layout === 'split') {
+      const a = Math.round(Hh / 2);
+      place(A, { x: 0, y: 0, w: W, h: a });
+      place(B, { x: 0, y: a + 1, w: W, h: Hh - a - 1 });
+      place(divider, { x: 0, y: a, w: W, h: 1 }); divider.classList.remove('hidden');
+    } else if (st.layout === 'pip') place(B, pipRect(st.corner));
+    $('#viewIco').textContent = { single: 'crop_square', split: 'splitscreen', pip: 'picture_in_picture' }[st.layout];
+    const size = [W, Hh, st.layout, st.main, st.corner].join();
+    if (size !== lastSize) { lastSize = size; window.dispatchEvent(new Event('resize')); }
+  }
+  new ResizeObserver(() => layout()).observe(stage);
+  async function setLayout(l) {
+    if (l === st.layout) return;
+    st.layout = l;
+    layout();
+    await new Promise(requestAnimationFrame);
+    (l === 'single' ? [M()] : [M(), C()]).forEach((v) => (v.focused ? v.fitFocus({ maxK: MAXK[kindOf(v.sheet)] }) : v.zoomToFit(0)));
+    if (l !== 'single') relate(); else { notes.A = notes.B = ''; C().clear(); }
+    renderPaneHeads(); renderPop(); syncHash();
+  }
+  function swap() {
+    if (st.layout === 'single') return;
+    st.main = otherKey(st.main);
+    layout();
+    requestAnimationFrame(() => { [VA, VB].forEach((v) => (v.focused ? v.fitFocus({ maxK: MAXK[kindOf(v.sheet)] }) : v.zoomToFit(200))); });
+    renderAll();
+  }
+  function renderPaneHeads() {
+    ['A', 'B'].forEach((k) => {
+      const p = pane(k), id = viewer(k).sheet;
+      $('.code', p).textContent = id;
+      $('.nm', p).textContent = KIND[kindOf(id)] + ' · ' + P[id].name;
+      $('.note', p).innerHTML = notes[k] ? `<span class="msi">info</span>${esc(notes[k])}` : '';
+      $('.note', p).title = notes[k];
+      $('[data-act="swap"]', p).hidden = k === st.main;
+    });
+  }
+  $$('.pane').forEach((p) => p.addEventListener('click', (e) => {
+    const b = e.target.closest('.pane-hd [data-act]');
+    if (!b) return;
+    if (b.dataset.act === 'swap') swap();
+    if (b.dataset.act === 'fit') viewer(p.dataset.key).zoomToFit(240);
+  }));
+  // PiP: drag to any corner, tap to swap
+  let drag = null;
+  $$('.pane').forEach((p) => {
+    p.addEventListener('pointerdown', (e) => {
+      if (!p.classList.contains('pip')) return;
+      e.preventDefault();
+      p.setPointerCapture(e.pointerId);
+      drag = { p, id: e.pointerId, x: e.clientX, y: e.clientY, l: p.offsetLeft, t: p.offsetTop, moved: false };
+      p.classList.remove('snap');
+    });
+    p.addEventListener('pointermove', (e) => {
+      if (!drag || drag.id !== e.pointerId) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+      drag.moved = true; p.classList.add('dragging');
+      p.style.left = Math.max(0, Math.min(stage.clientWidth - p.offsetWidth, drag.l + dx)) + 'px';
+      p.style.top = Math.max(0, Math.min(stage.clientHeight - p.offsetHeight, drag.t + dy)) + 'px';
+    });
+    const up = (e) => {
+      if (!drag || drag.id !== e.pointerId) return;
+      const d = drag; drag = null;
+      p.classList.remove('dragging');
+      if (!d.moved) { if (e.type === 'pointerup') swap(); return; }
+      const cx = p.offsetLeft + p.offsetWidth / 2, cy = p.offsetTop + p.offsetHeight / 2;
+      st.corner = (cy < stage.clientHeight / 2 ? 't' : 'b') + (cx < stage.clientWidth / 2 ? 'l' : 'r');
+      p.classList.add('snap');
+      layout();
+      const v = M(); if (v.focused) v.fitFocus({ maxK: MAXK[kindOf(v.sheet)] });
+    };
+    p.addEventListener('pointerup', up);
+    p.addEventListener('pointercancel', up);
+  });
+  $('#ttl').addEventListener('click', () => M().zoomToFit(260));
+
+  // ------------------------------------------------------------------ View popover
+  const pop = $('#pop'), popScrim = $('#popScrim'), viewBtn = $('#viewBtn');
+  function renderPop() {
+    if (!pop.classList.contains('on')) return;
+    const main = M().sheet, cmp = C().sheet;
+    const room = P[main].room;
+    const sugg = T.job.types.map((t) => t.id).filter((k) => k !== kindOf(main)).map((k) => T.counterpart(main, k)).filter((id) => id && id !== main);
+    const row = (id, nest, star) => `<button class="cmp${nest ? ' nest' : ''}" role="menuitemradio" data-cmp="${id}" aria-checked="${id === cmp && st.layout !== 'single'}" ${id === main ? 'disabled' : ''}>
+        ${star ? `<span class="msi k">${typeOf(id).icon}</span>` : ''}<b>${id}</b><span class="nm">${esc(star ? KIND[kindOf(id)] + ' · ' + P[id].name : P[id].name)}</span>${id === main ? '<span class="tag">Open</span>' : ''}<span class="msi tick">check</span></button>`;
+    pop.innerHTML = `<div class="ph"><h4>Layout</h4><div class="seg" role="radiogroup" aria-label="Layout">
+        ${[['single', 'crop_square', 'Single'], ['split', 'splitscreen', 'Split'], ['pip', 'picture_in_picture', 'PiP']].map(([id, ic, lb]) => `<button role="radio" data-layout="${id}" aria-checked="${st.layout === id}"><span class="msi">${ic}</span>${lb}</button>`).join('')}
+      </div></div>
+      <div class="pb">
+        ${sugg.length ? `<div class="sh">Same room${room ? ' · ' + esc(room) : ''}</div>${sugg.map((id) => row(id, false, true)).join('')}` : ''}
+        <div class="sh">Compare with</div>
+        ${T.job.types.map((t) => `<div class="ty"><span class="msi">${t.icon}</span>${esc(t.label)}<span class="msi">chevron_right</span></div>${t.pages.map((id) => row(id, true)).join('')}`).join('')}
+      </div>`;
+    const r = viewBtn.getBoundingClientRect();
+    pop.style.top = r.bottom + 6 + 'px';
+    pop.style.right = Math.max(8, innerWidth - r.right) + 'px';
+  }
+  function openPop(on) {
+    pop.classList.toggle('on', on); popScrim.classList.toggle('on', on); viewBtn.setAttribute('aria-expanded', on);
+    if (on) { closeRow(); renderPop(); }
+  }
+  viewBtn.addEventListener('click', () => openPop(!pop.classList.contains('on')));
+  popScrim.addEventListener('pointerdown', (e) => { e.preventDefault(); openPop(false); });
+  pop.addEventListener('click', async (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.layout) return setLayout(b.dataset.layout);
+    if (b.dataset.cmp) { await setCompare(b.dataset.cmp); openPop(false); }
+  });
+
+  // ------------------------------------------------------------------ drawer
+  const drawer = $('#drawer'), scrim = $('#scrim');
+  function openDrawer(on) {
+    drawer.classList.toggle('on', on); scrim.classList.toggle('on', on);
+    drawer.setAttribute('aria-hidden', !on); $('#menuBtn').setAttribute('aria-expanded', on);
+    drawer.style.transform = '';
+    if (on) { closeRow(); openPop(false); renderDrawer(); }
+  }
+  $('#menuBtn').addEventListener('click', () => openDrawer(true));
+  $('#drClose').addEventListener('click', () => openDrawer(false));
+  scrim.addEventListener('click', () => openDrawer(false));
+  // swipe left to close
+  let sw = null;
+  drawer.addEventListener('pointerdown', (e) => { sw = { x: e.clientX, y: e.clientY, id: e.pointerId, dx: 0, on: false }; });
+  drawer.addEventListener('pointermove', (e) => {
+    if (!sw || e.pointerId !== sw.id) return;
+    const dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+    if (!sw.on && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.3 && dx < 0) { sw.on = true; drawer.classList.add('dragging'); try { drawer.setPointerCapture(e.pointerId); } catch (_) {} }
+    if (sw.on) { sw.dx = Math.min(0, dx); drawer.style.transform = `translateX(${sw.dx}px)`; }
+  });
+  const swEnd = () => {
+    if (!sw) return;
+    const s = sw; sw = null;
+    drawer.classList.remove('dragging');
+    if (!s.on) return;
+    drawerSwiped = true; setTimeout(() => (drawerSwiped = false), 50);
+    if (s.dx < -70) openDrawer(false); else drawer.style.transform = '';
+  };
+  let drawerSwiped = false;
+  drawer.addEventListener('pointerup', swEnd);
+  drawer.addEventListener('pointercancel', swEnd);
+
+  function renderDrawer() {
+    const id = M().sheet, k = kindOf(id);
+    let h = '';
+    if (k === 'schematic') {
+      const nOff = st.hidden.length;
+      h += `<div class="grp-h"><h3>Signals · ${esc(id)}</h3>${nOff ? `<button class="lnk" data-act="allcls">Show all</button>` : ''}</div><div class="grp">` +
+        CLS.map((c) => {
+          const n = (T.sheets[id].cables || []).filter((x) => x.cls === c).length + (c === 'power' ? (T.sheets[id].services || []).length : 0);
+          return `<button class="li" role="switch" data-cls="${c}" aria-checked="${!st.hidden.includes(c)}"><span class="badge">${T.classes[c].prefix}</span><span class="lab"><span>${esc(T.classes[c].label)}</span><small>${n ? n + (c === 'power' ? ' feed' : ' cable') + (n === 1 ? '' : 's') : 'None on this page'}</small></span><span class="sw"></span></button>`;
+        }).join('') + `</div><p class="foot">Applies to both panes.</p>`;
+      h += `<div class="grp-h"><h3>Trace depth</h3></div><div class="grp">` +
+        [['cable', 'This cable', 'Wire: just that cable · Unit: its connections'], ['connections', 'Connections', 'One more hop either side'], ['path', 'Whole path', 'Follow it end to end']]
+          .map(([d, l, s]) => `<button class="li" role="radio" data-depth="${d}" aria-checked="${st.depth === d}"><span class="lab"><span>${l}</span><small>${s}</small></span><span class="msi tick">check</span></button>`).join('') + `</div>`;
+      h += `<div class="grp-h"><h3>Overlays</h3></div><div class="grp">
+        <button class="li" role="switch" data-ov="zones" aria-checked="${st.zones}"><span class="msi ico">select</span><span class="lab"><span>Location zones</span><small>Ceiling, wall, table boxes</small></span><span class="sw"></span></button>
+        <button class="li" role="switch" data-ov="clouds" aria-checked="${st.clouds}"><span class="msi ico">cloud</span><span class="lab"><span>Revision clouds</span></span><span class="sw"></span></button></div>`;
+    } else {
+      const ls = T.layersFor(id), off = st.layersOff[id] || [];
+      h += `<div class="grp-h"><h3>Layers · ${esc(id)}</h3>${off.length ? `<button class="lnk" data-act="alllayers">Show all</button>` : ''}</div><div class="grp">` +
+        (ls.length ? ls.map((l) => `<button class="li" role="switch" data-layer="${l.id}" aria-checked="${!off.includes(l.id)}"><span class="lab"><span>${esc(l.label)}</span><small>${l.count} item${l.count === 1 ? '' : 's'}</small></span><span class="sw"></span></button>`).join('')
+          : `<div class="li"><span class="lab"><small>No layers on this page yet</small></span></div>`) + `</div>`;
+      h += `<div class="grp-h"><h3>Trace depth</h3></div><div class="grp">` +
+        [['cable', 'This cable'], ['connections', 'Connections'], ['path', 'Whole path']]
+          .map(([d, l]) => `<button class="li" role="radio" data-depth="${d}" aria-checked="${st.depth === d}"><span class="lab"><span>${l}</span></span><span class="msi tick">check</span></button>`).join('') +
+        `</div><p class="foot">Used when you tap a wire or unit on a schematic.</p>`;
+    }
+    h += `<button class="reset" data-act="reset"><span class="msi">restart_alt</span>Reset view</button>`;
+    $('#drBody').innerHTML = h;
+  }
+  $('#drBody').addEventListener('click', (e) => {
+    if (drawerSwiped) return;
+    const b = e.target.closest('button');
+    if (!b) return;
+    const d = b.dataset;
+    if (d.cls) {
+      st.hidden = st.hidden.includes(d.cls) ? st.hidden.filter((x) => x !== d.cls) : [...st.hidden, d.cls];
+      afterHide();
+    } else if (d.act === 'allcls') { st.hidden = []; afterHide(); }
+    else if (d.layer) {
+      const id = M().sheet, off = st.layersOff[id] || [];
+      st.layersOff[id] = off.includes(d.layer) ? off.filter((x) => x !== d.layer) : [...off, d.layer];
+      applyFilters();
+    } else if (d.act === 'alllayers') { st.layersOff[M().sheet] = []; applyFilters(); }
+    else if (d.ov) { st[d.ov] = !st[d.ov]; applyFilters(); }
+    else if (d.depth) { st.depth = d.depth; if (st.sel) select(st.sel, st.selFrom); }
+    else if (d.act === 'reset') {
+      st.hidden = []; st.layersOff = {}; st.zones = st.clouds = true; st.depth = 'cable';
+      applyFilters(); select(null); VA.zoomToFit(240); VB.zoomToFit(240);
+    }
+    renderDrawer(); syncHash();
+  });
+  function afterHide() {
+    applyFilters();
+    const s = st.sel;
+    if (s && (s.kind === 'cable' || s.kind === 'port') && st.hidden.includes(T.cables[s.id || s.cable].cls)) select(null);
+    else if (s) select(s, st.selFrom);
+    renderDrawer(); syncHash();
+  }
+
+  // ------------------------------------------------------------------ press-and-hold radial
+  const catcher = $('#rmCatch');
+  const R0 = 42, R1 = 118;
+  let R = null, lastDown = null;
+  stage.addEventListener('pointerdown', (e) => { if (!R) lastDown = { id: e.pointerId, type: e.pointerType }; }, true);
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).then(() => true, () => legacy(text));
+    return Promise.resolve(legacy(text));
+  }
+  function legacy(text) {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (_) {} ta.remove(); return ok;
+  }
+  const copyItem = (text) => ({ icon: 'content_copy', label: 'Copy label', hint: text, run: async (it) => {
+    const ok = await copyText(text); it.done = true; it.icon = ok ? 'check' : 'error'; it.label = ok ? 'Copied' : 'Blocked'; return { keep: 800 };
+  } });
+  async function findOn(otherId, ref, k) {
+    if (C().sheet !== otherId) { st.compareAuto = false; await C().setSheet(otherId); }
+    if (st.layout === 'single') { st.layout = 'split'; layout(); await new Promise(requestAnimationFrame); }
+    select(ref, k, { zoom: true });
+    renderPop();
+  }
+  function radialItems(hit, k) {
+    const V = viewer(k), sheet = V.sheet, kind = kindOf(sheet);
+    if (!hit) return null;
+    hit = normal(hit);
+    const counter = (want) => T.counterpart(sheet, want, hit.room);
+    const findTo = (want, icon, label) => {
+      const id = counter(want);
+      if (!id || id === sheet) return null;
+      const r = T.relate(hit, sheet, id);
+      if (!r || (r.missing.length && r.missing.length === r.tags.length)) return null;
+      return { icon, label, hint: `${id} · ${P[id].name}`, run: () => findOn(id, hit, k) };
+    };
+    if (hit.kind === 'cable' || hit.kind === 'port') {
+      const c = T.cables[hit.kind === 'cable' ? hit.id : hit.cable];
+      return { title: c.id, sub: c.badge, items: [
+        { icon: 'route', label: 'Whole path', hint: 'Follow it end to end', run: () => select(hit, k, { depth: 'path', zoom: true }) },
+        findTo('elevation', 'wallpaper', 'Find on wall') || findTo('plan', 'floor', 'Find on plan'),
+        { icon: 'visibility_off', label: `Hide ${T.classes[c.cls].prefix}`, hint: `Hide ${T.classes[c.cls].label.toLowerCase()}`, run: () => { st.hidden = [...new Set([...st.hidden, c.cls])]; afterHide(); } },
+        copyItem(T.label(c)),
+      ].filter(Boolean) };
+    }
+    if (hit.kind === 'device' && kind === 'schematic') {
+      const d = T.deviceOn(sheet, hit.tag) || {};
+      return { title: hit.tag, sub: [d.make, d.model].filter(Boolean).join(' '), items: [
+        { icon: 'hub', label: 'Connections', hint: `${sheetCables(sheet, hit.tag).length} cables`, run: () => select(hit, k, { depth: 'cable', zoom: true }) },
+        { icon: 'route', label: 'Whole path', hint: 'Every hop from here', run: () => select(hit, k, { depth: 'path', zoom: true }) },
+        findTo('elevation', 'wallpaper', 'Find on wall') || findTo('plan', 'floor', 'Find on plan'),
+        copyItem(`${hit.tag} ${[d.make, d.model].filter(Boolean).join(' ')}`.trim()),
+      ].filter(Boolean) };
+    }
+    const tag = hit.tag || hit.id;
+    const items = [findTo('schematic', 'account_tree', 'On schematic'), kind !== 'elevation' && findTo('elevation', 'wallpaper', 'Find on wall'), kind !== 'plan' && findTo('plan', 'floor', 'Find on plan'), copyItem(tag)].filter(Boolean);
+    return { title: tag, sub: KIND[kind], items };
+  }
+  function sector(cx, cy, a0, a1) {
+    const p = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)].map((n) => n.toFixed(2)).join(',');
+    const large = a1 - a0 > Math.PI ? 1 : 0;
+    return `M${p(R1, a0)}A${R1},${R1} 0 ${large} 1 ${p(R1, a1)}L${p(R0, a1)}A${R0},${R0} 0 ${large} 0 ${p(R0, a0)}Z`;
+  }
+  function openRadial(k, x, y, hit, holdId) {
+    const ctx = radialItems(hit, k);
+    if (!ctx) return false;
+    closeRadial();
+    const vr = pane(k).querySelector('.vh').getBoundingClientRect(), sr = stage.getBoundingClientRect();
+    x += vr.left - sr.left; y += vr.top - sr.top;
+    const W = stage.clientWidth, Hh = stage.clientHeight, m = 6;
+    const cx = Math.max(R1 + m, Math.min(W - R1 - m, x)), cy = Math.max(R1 + m, Math.min(Hh - R1 - m, y));
+    R = { k, x, y, cx, cy, hit, holdId, hov: -1, down: -1, moved: false, ctx };
+    R.el = document.createElement('div'); R.el.className = 'rm';
+    R.el.style.cssText = `left:${cx}px;top:${cy}px;width:${R1 * 2}px;height:${R1 * 2}px`;
+    catcher.innerHTML = `<div class="rm-dot" style="left:${x}px;top:${y}px"></div>`;
+    catcher.appendChild(R.el); catcher.classList.add('on');
+    drawRadial();
+    requestAnimationFrame(() => R && R.el.classList.add('on'));
+    viewer(k).peek(hit.kind === 'port' && hit.cable ? { kind: 'cable', id: hit.cable } : normal(hit));
+    if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) {}
+    return true;
+  }
+  function drawRadial() {
+    if (!R) return;
+    const its = R.ctx.items, n = its.length, per = (Math.PI * 2) / n, C0 = R1, rm = (R0 + R1) / 2 + 2;
+    let svg = `<svg width="${R1 * 2}" height="${R1 * 2}" viewBox="0 0 ${R1 * 2} ${R1 * 2}">`, labels = '';
+    its.forEach((it, i) => {
+      const a = -Math.PI / 2 + i * per, st_ = it.done ? ' done' : i === R.hov ? ' hov' : '';
+      svg += `<path class="rm-w${st_}" d="${sector(C0, C0, a - per / 2, a + per / 2)}"/>`;
+      const lx = C0 + rm * Math.cos(a), ly = C0 + rm * Math.sin(a);
+      labels += `<div class="rm-l${st_}" style="left:${lx.toFixed(1)}px;top:${ly.toFixed(1)}px;width:${R1 - R0 - 4}px"><span class="msi">${it.icon}</span><span>${esc(it.label)}</span></div>`;
+    });
+    svg += `<circle class="rm-hub" cx="${C0}" cy="${C0}" r="${R0 - 3}"/></svg>`;
+    const h = R.hov >= 0 ? its[R.hov] : null;
+    let hint = h ? h.hint : R.ctx.sub;
+    if (hint && hint.length > 34) hint = hint.slice(0, 32) + '…';
+    R.el.innerHTML = svg + labels + `<div class="rm-c" style="left:${C0}px;top:${C0}px;width:${(R0 - 6) * 2}px"><span class="t">${esc(h ? h.label : R.ctx.title)}</span>${hint && !h ? `<span class="h">${esc(hint)}</span>` : ''}</div>`;
+  }
+  function itemAt(px, py, slack) {
+    if (!R) return -1;
+    const dx = px - R.cx, dy = py - R.cy, d = Math.hypot(dx, dy);
+    if (d < R0 || d > R1 + (slack || 0)) return -1;
+    const n = R.ctx.items.length, per = 360 / n;
+    return Math.round(((Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360) / per) % n;
+  }
+  function closeRadial() {
+    if (!R) return;
+    const k = R.k; R = null;
+    catcher.classList.remove('on'); catcher.innerHTML = '';
+    viewer(k).unpeek();
+  }
+  let busy = false;
+  async function pick(i) {
+    if (!R || busy) return;
+    const it = R.ctx.items[i];
+    if (!it) return;
+    busy = true;
+    let r;
+    try { r = await it.run(it); } finally { busy = false; }
+    if (!R) return;
+    if (r && r.keep) { R.hov = -1; R.holdId = null; drawRadial(); setTimeout(closeRadial, r.keep); return; }
+    closeRadial();
+  }
+  const sPt = (e) => { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  ['A', 'B'].forEach((k) => viewer(k).on('longpress', ({ x, y, hit }) => {
+    if (st.layout === 'pip' && k !== st.main) return;
+    if (!hit) return;
+    const id = lastDown && lastDown.id;
+    // hand the pointer to the menu: end the engine's pan so dragging onto a wedge doesn't move the drawing
+    if (id != null) {
+      try { viewer(k).svg.dispatchEvent(new PointerEvent('pointercancel', { pointerId: id, bubbles: true, pointerType: lastDown.type })); } catch (_) {}
+      try { if (viewer(k).svg.hasPointerCapture(id)) viewer(k).svg.releasePointerCapture(id); } catch (_) {}
+    }
+    openRadial(k, x, y, hit, id);
+  }));
+  stage.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    if (R || (lastDown && lastDown.type !== 'mouse')) return;
+    const k = e.target.closest('.pane') && e.target.closest('.pane').dataset.key;
+    if (!k || (st.layout === 'pip' && k !== st.main)) return;
+    const vr = pane(k).querySelector('.vh').getBoundingClientRect();
+    const x = e.clientX - vr.left, y = e.clientY - vr.top;
+    openRadial(k, x, y, viewer(k).hitTest(x, y), null);
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!R) return;
+    const [px, py] = sPt(e), holding = e.pointerId === R.holdId;
+    if (holding && Math.hypot(px - R.x, py - R.y) > 12) R.moved = true;
+    if (holding || e.pointerType === 'mouse' || R.down >= 0) {
+      const i = itemAt(px, py, holding ? 60 : 0);
+      if (i !== R.hov && (holding ? R.moved : true)) { R.hov = i; drawRadial(); }
+    }
+  });
+  catcher.addEventListener('pointerdown', (e) => {
+    if (!R || e.pointerId === R.holdId) return;
+    e.preventDefault();
+    const [px, py] = sPt(e), i = itemAt(px, py, 0);
+    if (i < 0) { closeRadial(); return; }
+    R.down = i; R.hov = i; drawRadial();
+  });
+  window.addEventListener('pointerup', (e) => {
+    if (!R) return;
+    const [px, py] = sPt(e);
+    if (e.pointerId === R.holdId) {
+      R.holdId = null;
+      if (!R.moved) { R.hov = -1; drawRadial(); return; }   // released in place: stays open for a tap
+      const i = itemAt(px, py, 60);
+      if (i >= 0) pick(i); else closeRadial();
+      return;
+    }
+    if (R.down >= 0) { const i = itemAt(px, py, 0), d = R.down; R.down = -1; if (i === d) pick(i); else { R.hov = -1; drawRadial(); } }
+  });
+  window.addEventListener('pointercancel', (e) => { if (R && e.isTrusted && e.pointerId === R.holdId) { R.holdId = null; R.hov = -1; drawRadial(); } });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (R) closeRadial();
+    else if (drawer.classList.contains('on')) openDrawer(false);
+    else if (pop.classList.contains('on')) openPop(false);
+    else if (st.rowOpen) closeRow();
+    else if (st.sel) select(null);
+  });
+
+  // ------------------------------------------------------------------ deep link
+  function refKey(r) {
+    if (!r) return '';
+    if (r.kind === 'cable') return 'c:' + r.id;
+    if (r.kind === 'port') return 'c:' + r.cable;
+    if (r.kind === 'device') return 'd:' + r.tag;
+    if (r.kind === 'symbol') return 'y:' + r.tag + ':' + (r.room || '');
+    if (r.kind === 'room') return 'r:' + r.id;
+    return '';
+  }
+  function parseRef(s, sheet) {
+    if (!s) return null;
+    const [k, a, b] = s.split(':');
+    if (k === 'c' && T.cables[a]) return { kind: 'cable', id: a };
+    if (k === 'd') return { kind: 'device', tag: a };
+    if (k === 'y') return { kind: 'symbol', sheet, tag: a, room: b || null };
+    if (k === 'r') return { kind: 'room', sheet, id: a };
+    return null;
+  }
+  function syncHash() {
+    const q = new URLSearchParams({ s: M().sheet });
+    if (st.layout !== 'single' || !st.compareAuto) q.set('c', C().sheet);
+    if (st.layout !== 'single') q.set('l', st.layout);
+    if (st.depth !== 'cable') q.set('d', st.depth);
+    if (st.sel) { q.set('sel', refKey(st.sel)); if (st.selFrom !== st.main) q.set('in', 'c'); }
+    history.replaceState(null, '', '#' + q.toString().replace(/%3A/g, ':'));
+  }
+
+  function renderAll() { renderTitle(); renderTypes(); renderPaneHeads(); renderSel(); renderPop(); if (drawer.classList.contains('on')) renderDrawer(); layout(); syncHash(); }
+
+  applyFilters();
+  renderAll();
+  await new Promise(requestAnimationFrame);
+  VA.zoomToFit(0); VB.zoomToFit(0);
+  if (H.sel) {
+    const k = H.in === 'c' ? otherKey(st.main) : st.main;
+    const ref = parseRef(H.sel, viewer(k).sheet);
+    if (ref) select(ref, k, { zoom: true });
+  }
+})();
+</script>
+</body>
+</html>

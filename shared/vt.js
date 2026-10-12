@@ -73,6 +73,7 @@
       });
     });
     const allServices = data.sheets.flatMap((s) => s.services || []);
+    const cables_ = cables;
     const cablesOf = (tag) => Object.values(cables).filter((c) => c.ends.some((e) => e.dev === tag));
     const servicesOf = (tag) => allServices.filter((s) => s.dev === tag);
     const peer = (c, tag) => c.ends.find((e) => e.dev !== tag) || c.ends[1];
@@ -167,6 +168,73 @@
     // the same tag can live on several sheets (AVS02 re-shows existing kit); resolve per sheet
     const deviceOn = (sheetId, tag) => ((sheets[sheetId] || {}).devices || []).find((d) => d.tag === tag) || null;
 
+    // ---- job structure: drawing types, pages, and the room each page belongs to (room tag = join key)
+    const job = {
+      types: [
+        { id: 'schematic', label: 'Schematics', short: 'Schem', icon: 'account_tree', pages: ['AVS01', 'AVS02'] },
+        { id: 'elevation', label: 'Elevations', short: 'Elev', icon: 'view_quilt', pages: ['AVE01', 'AVE02'] },
+        { id: 'plan', label: 'Floor plans', short: 'Plans', icon: 'floor', pages: ['AVF01'] },
+      ],
+      pages: {
+        AVS01: { name: '2B · 20P Boardroom', room: '2B' }, AVS02: { name: '6M · 6P Meeting room', room: '6M', hold: true },
+        AVE01: { name: '2B · Display wall & table', room: '2B' }, AVE02: { name: '6M · Display wall', room: '6M', hold: true },
+        AVF01: { name: 'Level 9 equipment plan', room: null },
+      },
+      rooms: { '2B': { schematic: 'AVS01', elevation: 'AVE01' }, '6M': { schematic: 'AVS02', elevation: 'AVE02' } },
+    };
+    const kindOf = (id) => sheets[id] && sheets[id].kind;
+    // the matching page of another type for a page (AVS01 -> AVE01 / AVF01)
+    function counterpart(fromId, toKind, room) {
+      room = room || (job.pages[fromId] || {}).room;
+      if (toKind === 'plan') return 'AVF01';
+      return room && job.rooms[room] ? job.rooms[room][toKind] : null;
+    }
+    /* What a selection on one drawing corresponds to on another.
+       Returns { focus, tags, missing, room } where focus feeds viewer.focus() on the other drawing.
+       Concealed kit maps to the plan's "equipment behind display" note; cables map to both end units. */
+    function relate(ref, fromId, toId) {
+      if (!ref) return null;
+      const from = sheets[fromId], to = sheets[toId];
+      if (!from || !to) return null;
+      let room = (job.pages[fromId] || {}).room;
+      let tags = [], cables = [];
+      if (ref.kind === 'cable' || ref.kind === 'port') {
+        const c = cables_[ref.cable || ref.id];
+        if (c) { tags = c.ends.map((e) => e.dev).filter((t) => from.devices && from.devices.some((d) => d.tag === t)); cables = [c.id]; }
+      } else if (ref.kind === 'device') tags = [ref.tag];
+      else if (ref.kind === 'symbol') {
+        room = ref.room;
+        const sym = (from.symbols || []).find((x) => x.tag === ref.tag && x.room === ref.room);
+        tags = sym && sym.tags ? sym.tags.slice() : [ref.tag];
+      } else if (ref.kind === 'room') {
+        room = ref.id;
+        tags = [...new Set((from.symbols || []).filter((x) => x.room === ref.id).flatMap((x) => x.tags || [x.tag]))];
+      }
+      const focus = { cables: [], devices: [], ports: [], services: [], boxes: [] };
+      const found = new Set();
+      if (to.kind === 'schematic') {
+        tags.forEach((t) => { if ((to.devices || []).some((d) => d.tag === t)) { focus.devices.push(t); found.add(t); } });
+        cables.forEach((id) => { if ((to.cables || []).some((c) => c.id === id)) focus.cables.push(id); });
+        if (ref.kind === 'device' && to.kind === 'schematic' && focus.devices.length) {
+          // a unit on the schematic is shown with its connections, like a tap there
+          const f = focusFor({ kind: 'device', tag: ref.tag });
+          if (f) { focus.cables = f.cables.filter((id) => (to.cables || []).some((c) => c.id === id)); focus.ports = f.ports; focus.devices = f.devices; }
+        }
+        focus.primary = tags.length === 1 ? tags[0] : null;
+      } else if (to.kind === 'elevation') {
+        tags.forEach((t) => { if ((to.marks || []).some((m) => m.tag === t)) { focus.devices.push(t); found.add(t); } });
+        focus.primary = tags.length === 1 ? tags[0] : null;
+      } else if (to.kind === 'plan') {
+        (to.symbols || []).forEach((sym) => {
+          if (room && sym.room !== room) return;
+          const hit = tags.filter((t) => sym.tag === t || (sym.tags || []).includes(t));
+          if (hit.length) { focus.boxes.push(sym.box); hit.forEach((t) => found.add(t)); }
+        });
+        if (ref.kind === 'room') { const r = (to.rooms || []).find((x) => x.id === room); if (r) { focus.outline = r.box; focus.boxes = []; focus.softBoxes = (to.symbols || []).filter((x) => x.room === room).map((x) => x.box); } }
+      }
+      return { focus, tags, room, missing: tags.filter((t) => !found.has(t)) };
+    }
+
     // physical cable label, in the SKS legend format: V101 VIDEO ORIG: VC-01 DEST: LCD 01
     const label = (c) => `${c.id} ${CLASSES[c.cls] ? CLASSES[c.cls].name : ''} ORIG: ${c.ends[0].dev} DEST: ${c.ends[1].dev}`;
 
@@ -200,12 +268,14 @@
     return {
       raw: data, project: data.project, sheets, sheetList: data.sheets, devices, cables, classes: CLASSES,
       serviceSchedule: data.serviceSchedule, cablesOf, servicesOf, peer, mine, focusFor, trace, label, where, search, layersFor, deviceOn,
-      services: servicesOf,
+      services: servicesOf, job, relate, counterpart, kindOf,
     };
   }
 
   // ---------------------------------------------------------------- viewer
+  let viewerCount = 0;
   function create(T, container, opts) {
+    const uid = ++viewerCount;
     opts = Object.assign({ sheet: 'AVS01', insets: null, maxZoom: 8 }, opts || {});
     const listeners = {};
     const emit = (ev, d) => (listeners[ev] || []).forEach((fn) => fn(d));
@@ -232,7 +302,7 @@
       base.setAttribute('class', 'vt-base');
       g.appendChild(base);
       const ko = el('g', { class: 'vt-knockout' }, g);
-      const maskId = 'vt-mask-' + id;
+      const maskId = 'vt-mask-' + uid + '-' + id;
       const mask = el('mask', { id: maskId, maskUnits: 'userSpaceOnUse', maskContentUnits: 'userSpaceOnUse', x: 0, y: 0, width: s.w, height: s.h }, defs);
       el('rect', { x: 0, y: 0, width: s.w, height: s.h, fill: '#fff' }, mask);
       const holes = el('g', { fill: '#000', stroke: '#000' }, mask);
@@ -644,6 +714,8 @@
       cam = { k, x: p.x - wx * k, y: p.y - wy * k }; gk = e.scale; applyCam();
     });
     window.addEventListener('resize', applyCam);
+    // panes change size without a window resize (split dividers, sheets); keep the camera in step
+    if (window.ResizeObserver) new ResizeObserver(() => applyCam()).observe(container);
 
     // ---------- public
     async function setSheet(id, o) {
