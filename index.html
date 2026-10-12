@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F335C">
+<title>SKS drawings viewer — Field Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500;700;900&family=Mulish:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+<link rel="stylesheet" href="shared/vt.css">
+<style>
+  body { overflow-y: auto; background: #fff; }
+  .band { background: var(--sks-navy); color: #fff; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  header.band .wrap { padding-top: calc(22px + var(--safe-top)); padding-bottom: 40px; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .logo-tab { background: #fff; border-radius: 0 0 10px 10px; padding: 10px 14px; margin-top: calc(-22px - var(--safe-top)); padding-top: calc(12px + var(--safe-top)); }
+  .logo-tab img { height: 34px; display: block; }
+  .eyebrow { font: 700 12px var(--font-head); letter-spacing: .14em; text-transform: uppercase; color: #c9c6ea; }
+  h1 { font: 900 38px/1.1 var(--font-head); margin: 26px 0 0; letter-spacing: -.01em; }
+  .lede { font-size: 17px; line-height: 1.6; color: #dfe6f0; max-width: 780px; margin: 14px 0 0; }
+  .rules { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .rule { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 600; }
+  .rule .msi { color: #c9c6ea; }
+  main .wrap { padding-top: 34px; padding-bottom: calc(60px + var(--safe-bottom)); }
+  h2 { font: 700 22px var(--font-head); color: var(--sks-navy); margin: 40px 0 6px; }
+  h2:first-child { margin-top: 0; }
+  .sub { color: var(--text-2); font-size: 15px; line-height: 1.55; margin: 0 0 18px; max-width: 780px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 18px; }
+  .opt { display: flex; flex-direction: column; text-decoration: none; color: inherit; background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; transition: box-shadow .15s, border-color .15s, transform .15s; }
+  .opt:hover { box-shadow: var(--shadow-lg); border-color: var(--line-strong); transform: translateY(-2px); }
+  .shot { position: relative; aspect-ratio: 16 / 10; background: var(--sks-light); border-bottom: 1px solid var(--line); overflow: hidden; }
+  .shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+  .shot .phone { position: absolute; right: 12px; bottom: -36px; width: 26%; aspect-ratio: 390 / 844; border: 3px solid var(--sks-navy); border-radius: 14px; overflow: hidden; background: #fff; box-shadow: var(--shadow); }
+  .shot .phone img { object-position: top center; }
+  .body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .body h3 { display: flex; align-items: center; gap: 10px; font: 700 18px var(--font-head); color: var(--sks-navy); }
+  .hero-cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; height: 50px; padding: 0 22px; border-radius: 12px; background: #fff; color: var(--sks-navy); font: 800 16px var(--font); text-decoration: none; box-shadow: 0 0 0 3px var(--sks-purple); }
+  .hero-cta:hover { background: var(--sks-light); }
+  .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .mode { display: flex; flex-direction: column; text-decoration: none; color: inherit; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; transition: box-shadow .15s, transform .15s; }
+  .mode:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+  .mode h3 { display: flex; align-items: center; gap: 8px; font: 700 17px var(--font-head); color: var(--sks-navy); }
+  .mode h3 .msi { color: var(--sks-purple); }
+  .num { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 7px; background: var(--sks-navy); color: #fff; font: 900 14px var(--font-head); }
+  .body p { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--text-2); }
+  .adds { font-size: 13px; color: var(--sks-navy); background: var(--sks-light); border-radius: 8px; padding: 8px 10px; line-height: 1.45; }
+  .go { margin-top: auto; padding-top: 4px; font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; gap: 4px; color: var(--sks-navy); }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; counter-reset: s; }
+  .step { border: 1px solid var(--line); border-radius: 10px; padding: 14px; font-size: 14px; line-height: 1.5; color: var(--text-2); }
+  .step b { display: flex; gap: 8px; align-items: center; color: var(--sks-navy); font: 700 15px var(--font-head); margin-bottom: 6px; }
+  .step b::before { counter-increment: s; content: counter(s); width: 22px; height: 22px; border-radius: 50%; background: var(--sks-purple); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+  code { font-size: 12.5px; background: var(--sks-light); padding: 1px 5px; border-radius: 4px; color: var(--sks-navy); }
+  .note { border-left: 3px solid var(--sks-purple); background: var(--sks-light); border-radius: 0 10px 10px 0; padding: 14px 16px; font-size: 14.5px; line-height: 1.6; color: var(--sks-navy); margin-top: 16px; }
+  footer { border-top: 1px solid var(--line); color: var(--text-3); font-size: 12.5px; padding: 18px 0 calc(18px + var(--safe-bottom)); }
+  @media (max-width: 768px) {
+    .wrap { padding: 0 16px; }
+    h1 { font-size: 28px; }
+    .lede { font-size: 15.5px; }
+    .grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    .modes { grid-template-columns: 1fr; }
+    .logo-tab img { height: 28px; }
+  }
+</style>
+</head>
+<body>
+<header class="band">
+  <div class="wrap">
+    <div class="top">
+      <div class="logo-tab"><img src="assets/sks-logo.svg" alt="SKS Technologies"></div>
+      <span class="eyebrow">Field Dashboard · design study</span>
+    </div>
+    <h1>The drawings viewer for the Field Dashboard</h1>
+    <p class="lede">Every drawing in a job sits in one strip across the top: schematics, elevations, floor plans. Each type opens in its own mode. Schematics are for tracing and filtering, elevations for layers, and floor plans for rooms and device types. It runs on a real SKS kit-built set, anonymised as "Demo Client". The drawing is the actual Visio export, and the interaction is read straight out of the .vsdx.</p>
+    <div class="rules">
+      <div class="rule"><span class="msi">timeline</span>Schematic: tap a wire, see only that trace</div>
+      <div class="rule"><span class="msi">memory</span>Tap a unit: all its connections</div>
+      <div class="rule"><span class="msi">layers</span>Elevation: layers on and off</div>
+      <div class="rule"><span class="msi">floor</span>Floor plan: rooms and device types</div>
+    </div>
+    <a class="hero-cta" href="viewer.html">Open the viewer <span class="msi">arrow_forward</span></a>
+  </div>
+</header>
+<main>
+  <div class="wrap">
+    <h2>One viewer, a mode per drawing type</h2>
+    <p class="sub">Pick a drawing from the strip at the top and the tools change to suit it. A unit picked on one drawing can be found on the others: from the schematic to where it sits on the wall, or from the floor plan to its connections.</p>
+    <div class="modes">
+      <a class="mode" href="viewer.html#AVS01/unit/AMP-01">
+        <div class="shot"><img src="assets/shots/viewer-desktop.jpg" alt="" loading="lazy"><div class="phone"><img src="assets/shots/viewer-phone.jpg" alt="" loading="lazy"></div></div>
+        <div class="body"><h3><span class="msi">timeline</span>Schematics: trace</h3><p>Tap a wire for that cable only, with its physical label and both ports. Tap a unit for every connection, then widen to two hops or the whole signal path. Signal chips (V · A · C · N · U · SK · P) hide classes; hold one to show only that class.</p></div>
+      </a>
+      <a class="mode" href="viewer.html#AVE01/unit/AMP-01">
+        <div class="shot"><img src="assets/shots/viewer-elev-desktop.jpg" alt="" loading="lazy"><div class="phone"><img src="assets/shots/viewer-elev-phone.jpg" alt="" loading="lazy"></div></div>
+        <div class="body"><h3><span class="msi">layers</span>Elevations: layers</h3><p>Show or hide the display and bracket, concealed kit, visible devices, outlets, dimensions, notes and clouds, or use the presets: Set-out, Behind display. Tap a unit to see what feeds it and jump to its trace.</p></div>
+      </a>
+      <a class="mode" href="viewer.html#AVF01/room/2B">
+        <div class="shot"><img src="assets/shots/viewer-plan-desktop.jpg" alt="" loading="lazy"><div class="phone"><img src="assets/shots/viewer-plan-phone.jpg" alt="" loading="lazy"></div></div>
+        <div class="body"><h3><span class="msi">floor</span>Floor plans: rooms</h3><p>Tap a room for its AV and its sheets. Show only displays, speakers, cameras or touch panels. Symbols carry no IDs (SKS convention), but tapping one finds the unit on the schematic and on the wall.</p></div>
+      </a>
+    </div>
+
+    <h2 id="options">Schematic trace explorations</h2>
+    <p class="sub">Five earlier takes on schematic tracing, each pushing one idea, mostly about running it one-handed on site. The best parts went into the viewer's schematic mode. They're kept here for comparison.</p>
+    <div class="grid">
+      <a class="opt" href="1-thumb.html">
+        <div class="shot"><img src="assets/shots/1-desktop.jpg" alt="" loading="lazy"><div class="phone"><img src="assets/shots/1-phone.jpg" alt="" loading="lazy"></div></div>
+        <div class="body">
+          <h3><span class="num">1</span>Thumb Trace</h3>
+          <p>A signal dock of chip-prefix keys (V · A · C · N · U · SK · P) at the bottom of the screen. Tap to hide a class, hold to solo it, or sweep a finger across to paint several. Left- or right-handed.</p>
+          <div class="adds"><b>Adds:</b> layer hiding with one thumb</div>
+          <span class="go">Open option 1 <span class="msi" style="font-size:18px">arrow_forward</span></span>
+        </div>
+      </a>
+      <a class="opt" href="2-radial.html">
+        <div class="shot"><img src="assets/shots/2-desktop.jpg" alt="" loading="lazy"><div class="phone"><img src="assets/shots/2-phone.jpg" alt="" loading="lazy"></div></div>
+        <div class="body">
+          <h3><span class="num">2</span>Press &amp; Hold</h3>
+          <p>No toolbars, just the drawing. Press and hold anywhere for a radial menu under your thumb that knows what it's on: a cable, a unit or empty space.</p>
+          <div class="adds"><b>Adds:</b> context tools without chrome</div>
+          <span class="go">Open option 2 <span class="msi" style="font-size:18px">arrow_forward</span></span>
+        </div>
+      </a>
+      <a class="opt" href="3-hops.html">
+        <div class="shot"><img src="assets/shots/3-desktop.jpg" alt="" loading="lazy"><div class="phone"><img src="assets/shots/3-phone.jpg" alt="" loading="lazy"></div></div>
+        <div class="body">
+          <h3><span class="num">3</span>Hop Ladder</h3>
+          <p>Start from a unit, then widen the trace one hop at a time, upstream, downstream or both, and step through it as a subway line of units and cables.</p>
+          <div class="adds"><b>Adds:</b> fault-finding along a whole signal path</div>
+          <span class="go">Open option 3 <span class="msi" style="font-size:18px">arrow_forward</span></span>
+        </div>
+      </a>
+      <a class="opt" href="4-label.html">
+        <div class="shot"><img src="assets/shots/4-desktop.jpg" alt="" loading="lazy"><div class="phone"><img src="assets/shots/4-phone.jpg" alt="" loading="lazy"></div></div>
+        <div class="body">
+          <h3><span class="num">4</span>Cable Label</h3>
+          <p>Type the number off the cable in your hand (V002) on a thumb keypad. You get the label card, both ends and ports, and can swipe through every cable on that unit.</p>
+          <div class="adds"><b>Adds:</b> from the physical label to the drawing in two taps</div>
+          <span class="go">Open option 4 <span class="msi" style="font-size:18px">arrow_forward</span></span>
+        </div>
+      </a>
+      <a class="opt" href="5-linked.html">
+        <div class="shot"><img src="assets/shots/5-desktop.jpg" alt="" loading="lazy"><div class="phone"><img src="assets/shots/5-phone.jpg" alt="" loading="lazy"></div></div>
+        <div class="body">
+          <h3><span class="num">5</span>Wall &amp; Wire</h3>
+          <p>Schematic and wall elevation linked. Tap a unit to see what it connects to and, at the same time, where it physically sits: behind the display, in the table box, plus its GPO feed.</p>
+          <div class="adds"><b>Adds:</b> "what is it connected to" and "where is it" together</div>
+          <span class="go">Open option 5 <span class="msi" style="font-size:18px">arrow_forward</span></span>
+        </div>
+      </a>
+    </div>
+
+    <h2>How it works</h2>
+    <p class="sub">There's no redrawing and no Visio on the server. The kit already produces everything the viewer needs. The floor plan is the one exception: this job has none, so AVF01 is a demo sheet drawn in the SKS equipment-plan style with the real title block.</p>
+    <div class="steps">
+      <div class="step"><b>Build with the kit</b>The drafting kit writes the .vsdx and the PDF export, exactly as issued.</div>
+      <div class="step"><b>Read the .vsdx</b>A .vsdx is zipped XML. Each <code>MOD_*</code> group is a unit, its rows are port cells, and connectors are glued to number chips (<code>V001</code>, <code>N003</code>) with the cable type on the line.</div>
+      <div class="step"><b>Show the PDF</b>The PDF page becomes a vector drawing, so the title block, logo, revision clouds and fonts are exactly what the client received.</div>
+      <div class="step"><b>Trace on top</b>The extracted geometry sits on the drawing to the point. Taps, highlights and class knock-outs all come from it.</div>
+    </div>
+    <div class="note">The kit's cable schedule (<code>Circuit, From device, From port, To device, To port, Cable</code>) is what makes every end land on the right port. Two kit additions would make the next round even better: cable length, and an install/test status per circuit. With those, the trace can show "pulled · terminated · tested" along the path.</div>
+  </div>
+</main>
+<footer><div class="wrap">Demo data: an SKS kit-built boardroom set with the client, address and quote numbers replaced. © SKS Technologies.</div></footer>
+</body>
+</html>

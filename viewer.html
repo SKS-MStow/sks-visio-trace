@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F335C">
+<title>Drawings · SKS Field Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500;700;900&family=Mulish:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+<link rel="stylesheet" href="shared/vt.css">
+<style>
+  :root { --strip-h: 104px; --bar-h: 56px; --panel-w: 372px; }
+  body { display: flex; flex-direction: column; height: 100dvh; height: 100vh; }
+  @supports (height: 100dvh) { body { height: 100dvh; } }
+
+  /* ---------- header */
+  .hdr { flex: none; display: flex; align-items: center; gap: 10px; padding: calc(6px + var(--safe-top)) 12px 6px calc(6px + var(--safe-left));
+    background: #fff; border-bottom: 1px solid var(--line); min-height: 58px; position: relative; z-index: 6; }
+  .hdr .logo { height: 26px; display: block; }
+  .hdr .proj { min-width: 0; line-height: 1.2; }
+  .hdr .proj b { display: block; font: 700 14px var(--font-head); color: var(--sks-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hdr .proj span { display: block; font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hdr .grow { flex: 1; }
+  .search { position: relative; width: 340px; max-width: 40vw; }
+  .search input { width: 100%; height: 40px; border: 1px solid var(--line-strong); border-radius: 10px; padding: 0 12px 0 38px; font: 600 14px var(--font); color: var(--sks-navy); background: var(--sks-light); outline: none; }
+  .search input:focus { border-color: var(--sks-purple); background: #fff; box-shadow: 0 0 0 3px rgba(124,119,185,.18); }
+  .search .msi { position: absolute; left: 10px; top: 9px; color: var(--text-2); font-size: 21px; pointer-events: none; }
+  .results { position: absolute; top: 46px; left: 0; right: 0; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-lg); max-height: 60vh; overflow: auto; display: none; z-index: 20; padding: 6px; }
+  .results.on { display: block; }
+  .res { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; text-align: left; padding: 9px 10px; border-radius: 8px; cursor: pointer; min-height: 44px; }
+  .res:hover, .res.kb { background: var(--sks-light); }
+  .res .t { font-weight: 800; color: var(--sks-navy); font-size: 14px; }
+  .res .s { font-size: 12.5px; color: var(--text-2); }
+  .res .where { margin-left: auto; font: 700 11px var(--font-head); color: var(--text-3); letter-spacing: .04em; }
+  .res-h { font: 700 11px var(--font-head); letter-spacing: .1em; color: var(--text-3); text-transform: uppercase; padding: 8px 10px 4px; }
+  .icon-btn { width: 44px; height: 44px; border: 0; border-radius: 10px; background: none; display: inline-flex; align-items: center; justify-content: center; color: var(--sks-navy); cursor: pointer; flex: none; }
+  .icon-btn:hover { background: var(--sks-light); }
+  .opt-link { font-size: 12.5px; font-weight: 700; color: var(--text-2); text-decoration: none; padding: 0 6px; white-space: nowrap; }
+  .opt-link:hover { color: var(--sks-navy); }
+  .only-phone { display: none; }
+
+  /* ---------- drawing strip (all drawings in the job, by type) */
+  .strip { flex: none; display: flex; gap: 0; overflow-x: auto; overflow-y: hidden; background: var(--sks-navy); padding: 10px 12px 10px calc(12px + var(--safe-left));
+    scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .strip::-webkit-scrollbar { display: none; }
+  .grp { display: flex; align-items: stretch; gap: 8px; padding-right: 14px; margin-right: 14px; border-right: 1px solid rgba(255,255,255,.16); flex: none; }
+  .grp:last-child { border-right: 0; }
+  .grp-l { writing-mode: vertical-rl; transform: rotate(180deg); font: 700 10.5px var(--font-head); letter-spacing: .14em; color: #b9b5e4; text-transform: uppercase; display: flex; align-items: center; justify-content: center; padding: 0 2px; }
+  .sheet { flex: none; width: 168px; border: 2px solid transparent; border-radius: 10px; background: rgba(255,255,255,.06); padding: 4px; cursor: pointer; scroll-snap-align: start; display: flex; gap: 8px; align-items: center; text-align: left; color: #fff; }
+  .sheet:hover { background: rgba(255,255,255,.12); }
+  .sheet img { width: 74px; height: 52px; object-fit: cover; border-radius: 5px; background: #fff; display: block; flex: none; }
+  .sheet > div { min-width: 0; overflow: hidden; }
+  .sheet .c { font: 800 13px var(--font-head); letter-spacing: .02em; white-space: nowrap; }
+  .sheet .n { font-size: 11.5px; line-height: 1.25; color: #d6dbe6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .sheet.on { background: #fff; color: var(--sks-navy); border-color: #fff; box-shadow: 0 0 0 3px var(--sks-purple); }
+  .sheet.on .n { color: var(--text-2); }
+  .sheet .tbc { display: inline-block; font-size: 10px; font-weight: 800; color: var(--warn); background: #fbf3e2; border-radius: 4px; padding: 0 4px; margin-left: 4px; vertical-align: 1px; }
+
+  /* ---------- per-drawing toolbar */
+  .bar { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px calc(12px + var(--safe-left)); background: #fff; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; min-height: var(--bar-h); }
+  .bar::-webkit-scrollbar { display: none; }
+  .mode-tag { flex: none; display: inline-flex; align-items: center; gap: 6px; font: 700 11px var(--font-head); letter-spacing: .1em; text-transform: uppercase; color: var(--sks-purple); padding-right: 4px; }
+  .sep { flex: none; width: 1px; align-self: stretch; background: var(--line); margin: 2px 4px; }
+  .chip { flex: none; display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 12px 0 6px; border-radius: 10px; border: 1.5px solid var(--line-strong); background: #fff; color: var(--sks-navy); font: 700 13px var(--font); cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; white-space: nowrap; }
+  .chip .k { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 26px; padding: 0 4px; border-radius: 6px; background: var(--sks-navy); color: #fff; font: 900 12px var(--font-head); letter-spacing: .02em; }
+  .chip .ct { font-size: 11px; font-weight: 800; color: var(--text-3); }
+  .chip.off { border-style: dashed; color: var(--text-3); background: #f6f8f9; }
+  .chip.off .k { background: #fff; color: var(--text-3); border: 1.5px dashed var(--line-strong); text-decoration: line-through; }
+  .chip.solo { box-shadow: 0 0 0 3px rgba(124,119,185,.35); border-color: var(--sks-purple); }
+  .chip.plain { padding: 0 12px; }
+  .chip.plain .msi { font-size: 19px; }
+  .chip .box { width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--sks-navy); display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; }
+  .chip:not(.off) .box { background: var(--sks-navy); }
+  .chip:not(.off) .box::after { content: ''; width: 9px; height: 5px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  .chip.pre { background: var(--sks-light); border-color: transparent; }
+  .chip.pre.on { background: var(--sks-navy); color: #fff; }
+  .hint { flex: none; font-size: 12.5px; color: var(--text-3); padding-left: 4px; white-space: nowrap; }
+
+  /* ---------- main: canvas + inspector */
+  .main { flex: 1; min-height: 0; display: flex; position: relative; }
+  .canvas { flex: 1; min-width: 0; position: relative; }
+  .zoom { position: absolute; right: 12px; bottom: 12px; display: flex; flex-direction: column; background: #fff; border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; z-index: 3; }
+  .zoom button { width: 44px; height: 44px; border: 0; background: #fff; color: var(--sks-navy); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .zoom button + button { border-top: 1px solid var(--line); }
+  .zoom button:hover { background: var(--sks-light); }
+
+  .panel { flex: none; width: var(--panel-w); background: #fff; border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; z-index: 4; }
+  .grab { display: none; }
+  .pbody { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 16px 18px calc(18px + var(--safe-bottom)); }
+  .p-kicker { font: 700 11px var(--font-head); letter-spacing: .12em; text-transform: uppercase; color: var(--sks-purple); }
+  .p-title { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+  .p-title h2 { font: 900 22px var(--font-head); color: var(--sks-navy); letter-spacing: .01em; }
+  .p-sub { font-size: 13.5px; color: var(--text-2); margin-top: 3px; line-height: 1.45; }
+  .p-x { margin-left: auto; }
+  .sec { margin-top: 18px; }
+  .sec-h { display: flex; align-items: center; justify-content: space-between; font: 700 11px var(--font-head); letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; }
+  .ends { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .end { display: grid; grid-template-columns: 58px 1fr; border: 0; width: 100%; text-align: left; background: #fff; cursor: pointer; padding: 0; }
+  .end + .end { border-top: 1px solid var(--line); }
+  .end .side { background: var(--sks-light); font: 800 11px var(--font-head); letter-spacing: .08em; color: var(--text-2); display: flex; align-items: center; justify-content: center; }
+  .end .body { padding: 10px 12px; min-height: 56px; }
+  .end .body b { font: 800 15px var(--font-head); color: var(--sks-navy); }
+  .end .body small { font-size: 12px; color: var(--text-2); margin-left: 6px; }
+  .end .body div { font-size: 13px; color: var(--sks-navy); margin-top: 2px; font-weight: 700; }
+  .end .body div i { font-style: normal; color: var(--text-2); font-weight: 600; }
+  .end:hover .body { background: #fbfcfc; }
+  .seg { display: flex; background: var(--sks-light); border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg button { flex: 1; border: 0; background: none; height: 40px; border-radius: 8px; font: 700 13px var(--font); color: var(--text-2); cursor: pointer; }
+  .seg button.on { background: var(--sks-navy); color: #fff; }
+  .seg button small { display: block; font-size: 10.5px; font-weight: 700; opacity: .75; margin-top: -2px; }
+  .rows { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: #fff; text-align: left; padding: 9px 12px; min-height: 46px; cursor: pointer; font: inherit; }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row:hover { background: #fbfcfc; }
+  .row.dim { cursor: default; color: var(--text-3); }
+  .row .pn { font-weight: 800; color: var(--sks-navy); font-size: 13px; min-width: 0; }
+  .row .pc { font-size: 11.5px; color: var(--text-3); font-weight: 700; }
+  .row .to { margin-left: auto; font-size: 12.5px; color: var(--text-2); text-align: right; }
+  .row .to b { color: var(--sks-navy); }
+  .row.hl { background: #f3f2fa; }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .lnk { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 10px; border: 1.5px solid var(--sks-navy); background: #fff; color: var(--sks-navy); font: 800 13px var(--font); cursor: pointer; }
+  .lnk:hover { background: var(--sks-light); }
+  .lnk.primary { background: var(--sks-navy); color: #fff; }
+  .lnk .msi { font-size: 19px; }
+  .svc { display: flex; flex-wrap: wrap; gap: 6px; }
+  .svc span { font-size: 12px; font-weight: 700; color: var(--sks-navy); background: var(--sks-light); border-radius: 6px; padding: 5px 8px; }
+  .empty-tips { display: grid; gap: 10px; margin-top: 14px; }
+  .tip { display: flex; gap: 12px; align-items: flex-start; background: var(--sks-light); border-radius: 10px; padding: 12px; font-size: 13.5px; line-height: 1.45; color: var(--sks-navy); }
+  .tip .msi { color: var(--sks-purple); }
+  .label-strip.big { font-size: 14px; display: flex; align-items: stretch; padding: 0; overflow: hidden; }
+  .label-strip.big b { font: 900 22px 'Arial', sans-serif; padding: 8px 12px; border-right: 1.5px dashed #000; display: flex; align-items: center; }
+  .label-strip.big span { padding: 8px 12px; display: flex; align-items: center; font-weight: 700; }
+  .toggle { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--sks-navy); margin-top: 10px; cursor: pointer; min-height: 40px; }
+  .toggle input { width: 20px; height: 20px; accent-color: var(--sks-navy); }
+  .muted { color: var(--text-3); font-size: 12.5px; }
+
+  /* ---------- phone */
+  @media (max-width: 768px) {
+    :root { --strip-h: 84px; }
+    .hdr { gap: 6px; padding-right: 6px; min-height: 52px; }
+    .hdr .logo { height: 22px; }
+    .hdr .proj b { font-size: 13px; }
+    .hdr .proj span { font-size: 11px; }
+    .search { display: none; position: absolute; left: 8px; right: 8px; top: calc(6px + var(--safe-top)); width: auto; max-width: none; z-index: 30; }
+    .hdr.searching .search { display: block; }
+    .hdr.searching > :not(.search) { visibility: hidden; }
+    .results { max-height: 70vh; }
+    .only-phone { display: inline-flex; }
+    .opt-link { display: none; }
+    .strip { padding: 6px 10px; }
+    .sheet { width: 138px; padding: 3px; gap: 7px; }
+    .sheet img { width: 50px; height: 36px; }
+    .sheet .c { font-size: 12px; }
+    .sheet .n { font-size: 10.5px; -webkit-line-clamp: 1; white-space: nowrap; text-overflow: ellipsis; display: block; }
+    .sheet .tbc { font-size: 9px; }
+    .grp-l { font-size: 9px; letter-spacing: .1em; }
+    .grp { padding-right: 10px; margin-right: 10px; gap: 6px; }
+    .bar { padding: 7px 10px; gap: 6px; }
+    .chip { height: 44px; }
+    .bar { min-height: 0; }
+    .hint { display: none; }
+    .panel { position: absolute; left: 0; right: 0; bottom: 0; width: auto; border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0;
+      box-shadow: 0 -8px 30px rgba(31,51,92,.14); height: var(--sheet-h, 64px); transition: height .22s cubic-bezier(.2,.8,.2,1); }
+    .panel.dragging { transition: none; }
+    .grab { display: flex; justify-content: center; align-items: center; height: 26px; flex: none; cursor: grab; touch-action: none; }
+    .grab::before { content: ''; width: 40px; height: 5px; border-radius: 3px; background: var(--line-strong); }
+    .pbody { padding: 2px 16px calc(14px + var(--safe-bottom)); }
+    .zoom { bottom: calc(var(--sheet-h, 64px) + 12px); transition: bottom .22s; }
+    .p-title h2 { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+<header class="hdr" id="hdr">
+  <a class="back-link" href="./" title="All options"><span class="msi">arrow_back</span></a>
+  <img class="logo" src="assets/sks-logo.svg" alt="SKS Technologies">
+  <div class="proj"><b id="pNum">SKS-00000</b><span id="pName">Demo client</span></div>
+  <div class="grow"></div>
+  <div class="search" id="search">
+    <span class="msi">search</span>
+    <input id="q" type="search" placeholder="Find a cable, unit or room (V002, AMP-01, 6M)" autocomplete="off" enterkeyhint="search">
+    <div class="results" id="results"></div>
+  </div>
+  <button class="icon-btn only-phone" id="qOpen" aria-label="Search"><span class="msi">search</span></button>
+  <a class="opt-link" href="./#options">Explorations</a>
+</header>
+<nav class="strip" id="strip" aria-label="Drawings in this job"></nav>
+<div class="bar" id="bar"></div>
+<div class="main">
+  <div class="canvas" id="canvas">
+    <div class="zoom">
+      <button id="zIn" aria-label="Zoom in"><span class="msi">add</span></button>
+      <button id="zOut" aria-label="Zoom out"><span class="msi">remove</span></button>
+      <button id="zFit" aria-label="Fit sheet"><span class="msi">fit_screen</span></button>
+    </div>
+  </div>
+  <aside class="panel" id="panel">
+    <div class="grab" id="grab"></div>
+    <div class="pbody" id="pbody"></div>
+  </aside>
+</div>
+
+<script src="shared/vt.js"></script>
+<script>
+(async () => {
+  const T = await VT.load('data/drawing.json');
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const isPhone = () => matchMedia('(max-width: 768px)').matches;
+  $('pNum').textContent = T.project.number;
+  $('pName').textContent = T.project.name;
+
+  // ---------------------------------------------------------------- job structure
+  // which schematic / elevation / plan room belong together (the room tag is the join key)
+  const PAIRS = { AVS01: { elev: 'AVE01', room: '2B' }, AVS02: { elev: 'AVE02', room: '6M' }, AVE01: { sch: 'AVS01', room: '2B' }, AVE02: { sch: 'AVS02', room: '6M' } };
+  const ROOM_SHEETS = { '2B': { sch: 'AVS01', elev: 'AVE01' }, '6M': { sch: 'AVS02', elev: 'AVE02' } };
+  const GROUPS = [
+    { label: 'Schematics', kind: 'schematic', ids: ['AVS01', 'AVS02'] },
+    { label: 'Elevations', kind: 'elevation', ids: ['AVE01', 'AVE02'] },
+    { label: 'Floor plans', kind: 'plan', ids: ['AVF01'] },
+  ];
+  const NAMES = {
+    AVS01: ['2B · 20P Boardroom', false], AVS02: ['6M · 6P Meeting room', true],
+    AVE01: ['2B · Display wall & table', false], AVE02: ['6M · Display wall', true], AVF01: ['Level 9 equipment plan', false],
+  };
+
+  const strip = $('strip');
+  strip.innerHTML = GROUPS.map((g) => `<div class="grp"><div class="grp-l">${g.label}</div>${g.ids.map((id) =>
+    `<button class="sheet" data-sheet="${id}"><img src="assets/thumbs/${id}.jpg" alt="" loading="lazy"><div><div class="c">${id}${NAMES[id][1] ? '<span class="tbc">TBC</span>' : ''}</div><div class="n">${NAMES[id][0]}</div></div></button>`).join('')}</div>`).join('');
+  strip.addEventListener('click', (e) => { const b = e.target.closest('.sheet'); if (b) openSheet(b.dataset.sheet); });
+
+  // ---------------------------------------------------------------- viewer
+  const panel = $('panel');
+  let sheetH = 64;
+  const v = VT.create(T, $('canvas'), {
+    sheet: 'AVS01', autoSelect: false,
+    insets: () => isPhone() ? { bottom: sheetH + 8, right: 58 } : { right: 60 },
+  });
+  await v.ready;
+  const kind = () => T.sheets[v.sheet].kind;
+
+  // ---------------------------------------------------------------- state
+  const S = { sel: null, depth: 'base', through: false, solo: null, elevPreset: 'all', planRoom: null };
+
+  // ---------------------------------------------------------------- toolbar per drawing type
+  const CLS = ['video', 'audio', 'control', 'network', 'usb', 'spk', 'power'];
+  function countCls(c) {
+    const s = T.sheets[v.sheet];
+    return c === 'power' ? (s.services || []).length : (s.cables || []).filter((x) => x.cls === c).length;
+  }
+  function renderBar() {
+    const bar = $('bar');
+    const k = kind();
+    if (k === 'schematic') {
+      const hidden = new Set(v.hidden);
+      bar.innerHTML = `<span class="mode-tag"><span class="msi" style="font-size:18px">timeline</span>Trace</span>` +
+        CLS.map((c) => `<button class="chip sig ${hidden.has(c) ? 'off' : ''} ${S.solo === c ? 'solo' : ''}" data-c="${c}" title="Tap to hide · hold to show only ${VT.CLASSES[c].label}"><span class="k">${VT.CLASSES[c].prefix}</span>${VT.CLASSES[c].label === 'Power & services' ? 'Power' : VT.CLASSES[c].label}<span class="ct">${countCls(c)}</span></button>`).join('') +
+        `<span class="sep"></span><button class="chip plain ${S.zonesOff ? 'off' : ''}" data-ov="zones"><span class="msi">select</span>Zones</button>` +
+        `<button class="chip plain ${S.cloudsOff ? 'off' : ''}" data-ov="clouds"><span class="msi">cloud</span>Clouds</button>` +
+        `<span class="hint">Tap to hide · hold to solo</span>`;
+      wireSignalChips(bar);
+    } else if (k === 'elevation') {
+      const off = new Set(v.layersOff());
+      const ls = T.layersFor(v.sheet);
+      const presets = v.sheet === 'AVE01' ? [['all', 'Everything'], ['setout', 'Set-out'], ['concealed', 'Behind display']] : [['all', 'Everything']];
+      bar.innerHTML = `<span class="mode-tag"><span class="msi" style="font-size:18px">layers</span>Layers</span>` +
+        presets.map(([id, l]) => `<button class="chip plain pre ${S.elevPreset === id ? 'on' : ''}" data-pre="${id}">${l}</button>`).join('') +
+        `<span class="sep"></span>` +
+        ls.map((l) => `<button class="chip plain lay ${off.has(l.id) ? 'off' : ''}" data-l="${l.id}">${l.label}<span class="box"></span></button>`).join('');
+      bar.querySelectorAll('.lay').forEach((b) => b.onclick = () => { v.toggleLayer(b.dataset.l); S.elevPreset = null; renderBar(); });
+      bar.querySelectorAll('[data-pre]').forEach((b) => b.onclick = () => applyElevPreset(b.dataset.pre));
+    } else {
+      const off = new Set(v.layersOff());
+      const s = T.sheets[v.sheet];
+      bar.innerHTML = `<span class="mode-tag"><span class="msi" style="font-size:18px">floor</span>Rooms</span>` +
+        s.rooms.map((r) => `<button class="chip plain pre ${S.planRoom === r.id ? 'on' : ''}" data-room="${r.id}">${esc(r.name.replace(' - ', ' · '))}</button>`).join('') +
+        `<span class="sep"></span><span class="mode-tag" style="color:var(--text-3)">Show</span>` +
+        s.layers.filter(([id]) => id !== 'legend').map(([id, l]) => `<button class="chip plain lay ${off.has(id) ? 'off' : ''}" data-l="${id}">${l}<span class="box"></span></button>`).join('');
+      bar.querySelectorAll('.lay').forEach((b) => b.onclick = () => { v.toggleLayer(b.dataset.l); renderBar(); });
+      bar.querySelectorAll('[data-room]').forEach((b) => b.onclick = () => selectRoom(b.dataset.room, true));
+    }
+    bar.querySelectorAll('[data-ov]').forEach((b) => b.onclick = () => {
+      const key = b.dataset.ov === 'zones' ? 'zonesOff' : 'cloudsOff';
+      S[key] = !S[key];
+      v.setOverlay({ zones: !S.zonesOff, clouds: !S.cloudsOff });
+      renderBar();
+    });
+  }
+  // signal chips: tap toggles, long-press solos (again to restore)
+  function wireSignalChips(bar) {
+    bar.querySelectorAll('.sig').forEach((b) => {
+      let t = 0, long = false;
+      b.addEventListener('pointerdown', () => { long = false; t = setTimeout(() => { long = true; solo(b.dataset.c); }, 480); });
+      const cancel = () => clearTimeout(t);
+      b.addEventListener('pointerup', cancel); b.addEventListener('pointerleave', cancel); b.addEventListener('pointercancel', cancel);
+      b.addEventListener('click', (e) => { if (long) { e.preventDefault(); return; } S.solo = null; v.toggleClass(b.dataset.c); afterFilter(); });
+      b.addEventListener('contextmenu', (e) => e.preventDefault());
+    });
+  }
+  function solo(c) {
+    if (S.solo === c) { S.solo = null; v.setHidden([]); }
+    else { S.solo = c; v.setHidden(CLS.filter((x) => x !== c)); }
+    afterFilter();
+  }
+  function afterFilter() {
+    // a hidden cable can't stay selected
+    if (S.sel && S.sel.kind !== 'device' && v.hidden.includes((T.cables[S.sel.cable || S.sel.id] || {}).cls)) select(null);
+    else if (S.sel) applyFocus();
+    renderBar();
+  }
+  function applyElevPreset(id) {
+    S.elevPreset = id;
+    const all = T.layersFor(v.sheet).map((l) => l.id);
+    const keep = { all, setout: ['display', 'services', 'dims', 'devices'], concealed: ['display', 'concealed', 'services'] }[id] || all;
+    v.setLayersOff(all.filter((l) => !keep.includes(l)));
+    renderBar();
+  }
+
+  // ---------------------------------------------------------------- selection + focus
+  function devOn(sheet, tag) { return T.deviceOn(sheet, tag) || T.devices[tag]; }
+  function schematicFor(sheet) { return kind() === 'schematic' ? sheet : (PAIRS[sheet] && PAIRS[sheet].sch) || 'AVS01'; }
+  function sheetCables(sheet, tag) { return (T.sheets[sheet].cables || []).filter((c) => c.ends.some((e) => e.dev === tag)); }
+
+  function applyFocus(zoom) {
+    const sel = S.sel, k = kind();
+    if (!sel) { v.select(null); return; }
+    if (k === 'schematic') {
+      let f = null;
+      if (S.depth !== 'base') {
+        const start = sel.kind === 'device' ? sel.tag : (sel.cable || sel.id);
+        const depth = S.depth === 'all' ? Infinity : sel.kind === 'device' ? 2 : 2;
+        const tr = T.trace(start, { depth, throughSwitch: S.through, classes: CLS.filter((c) => !v.hidden.includes(c)) });
+        tr.primary = sel.kind === 'device' ? sel.tag : null;
+        f = tr;
+      }
+      v.select(sel.kind === 'device' ? { kind: 'device', tag: sel.tag } : sel.kind === 'port' ? sel : { kind: 'cable', id: sel.id }, f ? { focus: f } : {});
+    } else if (k === 'elevation') {
+      v.select({ kind: 'device', tag: sel.tag }, { focus: { devices: [sel.tag], cables: [], ports: [], services: [], primary: sel.tag } });
+    } else {
+      v.select(sel);
+    }
+    if (zoom) v.fitFocus({ maxK: MAXK[k] });
+    else if (sel) ensureVisible();
+  }
+  const MAXK = { schematic: 1.6, elevation: 0.75, plan: 0.75 };
+  // after a tap: frame the selection only if it is too small to read or partly hidden
+  function ensureVisible() {
+    const f = v.focused; if (!f) return;
+    const b = v.focusBox(f); if (!b) return;
+    const cam = v.cam, r = $('canvas').getBoundingClientRect();
+    const x1 = b[0] * cam.k + cam.x, y1 = b[1] * cam.k + cam.y, w = b[2] * cam.k, h = b[3] * cam.k;
+    const bottom = r.height - (isPhone() ? sheetH : 0);
+    const tiny = Math.max(w, h) < Math.min(r.width, bottom) * 0.28;
+    const unreadable = cam.k < MAXK[kind()] * 0.3;   // whole-sheet zoom on a phone: text is a blur
+    const hidden = x1 < 0 || y1 < 0 || x1 + w > r.width || y1 + h > bottom;
+    if (tiny || hidden || unreadable) v.fitFocus({ maxK: MAXK[kind()] });
+  }
+
+  function select(ref, o) {
+    o = o || {};
+    S.sel = ref;
+    if (!o.keepDepth) S.depth = 'base';
+    applyFocus(o.zoom);
+    renderPanel();
+    syncHash();
+  }
+  function selectRoom(id, zoom) {
+    S.planRoom = id;
+    select({ kind: 'room', sheet: v.sheet, id }, { zoom });
+    renderBar();
+  }
+
+  v.on('tap', ({ hit }) => {
+    const k = kind();
+    if (!hit) { S.planRoom = null; select(null); if (k === 'plan') renderBar(); return; }
+    if (k === 'schematic') {
+      if (hit.kind === 'port') select({ kind: 'port', tag: hit.tag, port: hit.port, cable: hit.cable, id: hit.cable });
+      else select(hit.kind === 'device' ? { kind: 'device', tag: hit.tag } : { kind: 'cable', id: hit.id });
+    } else if (k === 'elevation') {
+      select({ kind: 'device', tag: hit.tag });
+    } else {
+      if (hit.kind === 'room') { selectRoom(hit.id); return; }
+      S.planRoom = hit.room; renderBar();
+      select(hit);
+    }
+  });
+  v.on('hover', (h) => { if (kind() === 'schematic' && !S.sel) h ? v.peek(h.kind === 'port' ? { kind: 'cable', id: h.cable } : h) : v.unpeek(); });
+
+  // ---------------------------------------------------------------- sheets
+  async function openSheet(id, then) {
+    if (id !== v.sheet) {
+      await v.setSheet(id);
+      S.sel = null; S.depth = 'base'; S.planRoom = null;
+      if (T.sheets[id].kind === 'elevation' && !v.layersOff().length) S.elevPreset = 'all';
+    }
+    strip.querySelectorAll('.sheet').forEach((b) => b.classList.toggle('on', b.dataset.sheet === id));
+    const on = strip.querySelector('.sheet.on');
+    if (on) on.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+    renderBar();
+    if (then) then(); else { v.select(null); renderPanel(); syncHash(); }
+  }
+
+  // jump to a unit on another drawing and select it there
+  async function goTo(sheet, ref) {
+    await openSheet(sheet, () => {});
+    if (ref.kind === 'room') { selectRoom(ref.id, true); return; }
+    if (T.sheets[sheet].kind === 'plan') {
+      const sym = T.sheets[sheet].symbols.find((s) => (s.tag === ref.tag || (s.tags || []).includes(ref.tag)) && (!ref.room || s.room === ref.room));
+      if (sym) { S.planRoom = sym.room; renderBar(); select({ kind: 'symbol', sheet, tag: sym.tag, room: sym.room }, { zoom: true }); return; }
+    }
+    select(ref, { zoom: true });
+  }
+
+  // ---------------------------------------------------------------- inspector
+  const pbody = $('pbody');
+  function where(tag, fromSheet) {
+    // links to the other drawings this unit appears on, scoped to the same room
+    const sch = schematicFor(fromSheet);
+    const room = (PAIRS[sch] || {}).room;
+    const out = [];
+    const elev = (PAIRS[sch] || {}).elev;
+    if (fromSheet !== sch && devOn(sch, tag)) out.push({ sheet: sch, label: 'Trace on schematic', icon: 'timeline', primary: true, ref: { kind: 'device', tag } });
+    if (elev && fromSheet !== elev && (T.sheets[elev].marks || []).concat(T.sheets[elev].items || []).some((m) => m.tag === tag)) out.push({ sheet: elev, label: 'On the wall', icon: 'view_quilt', ref: { kind: 'device', tag } });
+    const plan = T.sheets.AVF01;
+    const sym = plan.symbols.find((s) => s.room === room && (s.tag === tag || (s.tags || []).includes(tag)));
+    if (fromSheet !== 'AVF01' && sym) out.push({ sheet: 'AVF01', label: 'On the floor plan', icon: 'floor', ref: { kind: 'device', tag, room } });
+    return out;
+  }
+  function linksHtml(list) {
+    return `<div class="links">${list.map((l, i) => `<button class="lnk ${l.primary ? 'primary' : ''}" data-go="${i}"><span class="msi">${l.icon}</span>${l.label}<span class="muted" style="color:inherit;opacity:.7">${l.sheet}</span></button>`).join('')}</div>`;
+  }
+  function wireLinks(list) { pbody.querySelectorAll('[data-go]').forEach((b) => b.onclick = () => { const l = list[+b.dataset.go]; goTo(l.sheet, l.ref); }); }
+  const head = (kicker, title, sub, extra) => `<div class="p-kicker">${kicker}</div><div class="p-title"><h2>${title}</h2>${extra || ''}<button class="icon-btn p-x" id="pClose" aria-label="Clear selection"><span class="msi">close</span></button></div>${sub ? `<div class="p-sub">${sub}</div>` : ''}`;
+
+  function depthSeg(sel) {
+    const isDev = sel.kind === 'device';
+    const opts = isDev ? [['base', 'Connections', '1 hop'], ['2', 'Wider', '2 hops'], ['all', 'Whole path', 'all hops']]
+                       : [['base', 'This cable', 'only'], ['2', 'Next units', '+1 hop'], ['all', 'Whole path', 'all hops']];
+    return `<div class="sec"><div class="sec-h"><span>Trace</span></div><div class="seg" id="depth">${opts.map(([id, l, s]) => `<button data-d="${id}" class="${S.depth === id ? 'on' : ''}">${l}<small>${s}</small></button>`).join('')}</div>
+      <label class="toggle"><input type="checkbox" id="thru" ${S.through ? 'checked' : ''}> Carry through the AV switch (SW-01)</label></div>`;
+  }
+  function wireDepth() {
+    pbody.querySelectorAll('#depth button').forEach((b) => b.onclick = () => { S.depth = b.dataset.d; applyFocus(true); renderPanel(); });
+    const t = $('thru'); if (t) t.onchange = () => { S.through = t.checked; if (S.depth !== 'base') applyFocus(true); renderPanel(); };
+  }
+  function pathList() {
+    const f = v.focused;
+    if (!f || S.depth === 'base') return '';
+    const cs = (f.cables || []).map((id) => T.cables[id]).filter(Boolean);
+    return `<div class="sec"><div class="sec-h"><span>On this path</span><span>${cs.length} cables · ${(f.devices || []).length} units</span></div><div class="rows">${cs.map((c) =>
+      `<button class="row" data-cab="${c.id}"><span class="chip-id">${c.id}</span><span class="pc">${esc(c.badge)}</span><span class="to"><b>${c.ends[0].dev}</b> → <b>${c.ends[1].dev}</b></span></button>`).join('')}</div></div>`;
+  }
+
+  function renderPanel() {
+    const sel = S.sel, k = kind(), sh = T.sheets[v.sheet];
+    pbody.scrollTop = 0;
+    let html = '';
+    if (!sel) {
+      const tips = {
+        schematic: [['timeline', 'Tap a <b>wire</b>, chip or badge to see only that cable.'], ['memory', 'Tap a <b>unit</b> to see all its connections. Widen to the whole signal path from here.'], ['tune', 'Signal chips above hide classes. Hold one to show only that class.']],
+        elevation: [['layers', 'Turn layers on and off above: concealed kit, outlets, dimensions, notes.'], ['memory', 'Tap a unit to see what it is and jump to its connections on the schematic.']],
+        plan: [['meeting_room', 'Tap a <b>room</b> to see its AV and open its schematic and elevation.'], ['location_on', 'Tap a symbol to find that device on the other drawings.'], ['layers', 'Show only displays, speakers, cameras… with the chips above.']],
+      }[k];
+      html = `<div class="p-kicker">${esc(v.sheet)}</div><div class="p-title"><h2 style="font-size:18px">${esc(NAMES[v.sheet][0])}</h2></div>
+        <div class="p-sub">${esc(sh.title)}${NAMES[v.sheet][1] ? ' · survey hold, existing kit TBC' : ''}</div>
+        <div class="empty-tips">${tips.map(([i, t]) => `<div class="tip"><span class="msi">${i}</span><div>${t}</div></div>`).join('')}</div>`;
+      pbody.innerHTML = html;
+      setSheetH(isPhone() ? 64 : null);
+      return;
+    }
+    if (k === 'schematic' && (sel.kind === 'cable' || sel.kind === 'port')) {
+      const c = T.cables[sel.cable || sel.id];
+      const endHtml = (e, side) => {
+        const d = devOn(v.sheet, e.dev);
+        const p = d && d.ports.find((x) => x.name === e.port);
+        return `<button class="end" data-dev="${esc(e.dev)}"><span class="side">${side}</span><span class="body"><b>${esc(e.dev)}</b><small>${d ? esc((d.make + ' ' + d.model).trim()) : 'user / free end'}</small>
+          <div>${esc(e.port && e.port !== '-' ? e.port : '—')} <i>${p ? '· ' + esc(p.conn) : ''}</i></div></span></button>`;
+      };
+      html = head(`Cable · ${VT.CLASSES[c.cls] ? VT.CLASSES[c.cls].label : ''}`, c.id, `${esc(c.badge)} · ${esc(c.cable || '')}`) +
+        `<div class="sec"><div class="label-strip big"><b>${c.id}</b><span>${esc(T.label(c).replace(c.id + ' ', ''))}</span></div></div>` +
+        `<div class="sec"><div class="ends">${endHtml(c.ends[0], 'ORIG')}${endHtml(c.ends[1], 'DEST')}</div></div>` +
+        depthSeg(sel) + pathList();
+      const ln = where(c.ends[0].dev, v.sheet).filter((l) => l.sheet !== 'AVF01');
+      if (ln.length) html += `<div class="sec"><div class="sec-h"><span>Where it runs</span></div>${linksHtml(ln.map((l) => Object.assign({}, l, { label: 'Ends on the wall', ref: { kind: 'device', tag: c.ends[0].dev } })))}</div>`;
+      pbody.innerHTML = html;
+      pbody.querySelectorAll('.end').forEach((b) => b.onclick = () => { if (devOn(v.sheet, b.dataset.dev)) select({ kind: 'device', tag: b.dataset.dev }, { zoom: true }); });
+      wireDepth(); wireRows();
+      if (ln.length) wireLinks(ln.map((l) => Object.assign({}, l, { ref: { kind: 'device', tag: c.ends[0].dev } })));
+    } else if (k === 'schematic' && sel.kind === 'device') {
+      const d = devOn(v.sheet, sel.tag);
+      const cs = sheetCables(v.sheet, sel.tag);
+      const svcs = T.servicesOf(sel.tag).filter((s) => s.sheet === v.sheet);
+      const rows = (d ? d.ports : []).map((p) => {
+        const c = cs.find((x) => x.ends.some((e) => e.dev === sel.tag && e.port === p.name));
+        const sv = svcs.find((s) => s.port === p.name);
+        if (c) { const o = T.peer(c, sel.tag); return `<button class="row" data-cab="${c.id}"><span class="pn">${esc(p.name)}</span><span class="pc">${esc(p.conn)}</span><span class="to"><span class="chip-id">${c.id}</span> <b>${esc(o.dev)}</b></span></button>`; }
+        if (sv) return `<div class="row dim"><span class="pn" style="color:var(--text-2)">${esc(p.name)}</span><span class="pc">${esc(p.conn)}</span><span class="to">${esc(sv.text)}</span></div>`;
+        return `<div class="row dim"><span class="pn" style="color:var(--text-3)">${esc(p.name)}</span><span class="pc">${esc(p.conn)}</span><span class="to">spare</span></div>`;
+      }).join('');
+      const ln = where(sel.tag, v.sheet);
+      html = head('Unit', esc(sel.tag), d ? esc([d.make, d.model, d.desc].filter(Boolean).join(' · ')) : '') +
+        `<div class="sec"><div class="sec-h"><span>${cs.length} connection${cs.length === 1 ? '' : 's'}${svcs.length ? ` · ${svcs.length} service` : ''}</span></div>${rows ? `<div class="rows">${rows}</div>` : '<div class="muted">No ports drawn on this unit.</div>'}</div>` +
+        (cs.length ? depthSeg(sel) + pathList() : '') +
+        (ln.length ? `<div class="sec"><div class="sec-h"><span>Also on</span></div>${linksHtml(ln)}</div>` : '');
+      pbody.innerHTML = html;
+      wireDepth(); wireRows(); wireLinks(ln);
+    } else if (k === 'elevation') {
+      const sch = schematicFor(v.sheet);
+      const d = devOn(sch, sel.tag);
+      const it = (sh.items || []).find((x) => x.tag === sel.tag) || {};
+      const where1 = it.layer === 'concealed' ? 'Concealed behind the display, on the SKS tray' : it.layer === 'devices' ? 'Visible on the wall / table' : sel.tag === 'LCD-01' ? 'The display' : 'On this elevation';
+      const cs = sheetCables(sch, sel.tag);
+      const svcs = T.servicesOf(sel.tag).filter((s) => s.sheet === sch);
+      const ln = where(sel.tag, v.sheet);
+      html = head(where1, esc(sel.tag), d ? esc([d.make, d.model, d.desc].filter(Boolean).join(' · ')) : '') +
+        (svcs.length ? `<div class="sec"><div class="sec-h"><span>Fed from</span></div><div class="svc">${svcs.map((s) => `<span>${esc(s.text)} → ${esc(s.port)}</span>`).join('')}</div></div>` : '') +
+        `<div class="sec"><div class="sec-h"><span>${cs.length} connection${cs.length === 1 ? '' : 's'} on ${sch}</span></div>${cs.length ? `<div class="rows">${cs.map((c) => { const o = T.peer(c, sel.tag); return `<div class="row dim" style="color:var(--sks-navy)"><span class="chip-id">${c.id}</span><span class="pc">${esc(c.badge)}</span><span class="to"><b>${esc(o.dev)}</b> ${esc(o.port)}</span></div>`; }).join('')}</div>` : ''}</div>` +
+        (ln.length ? `<div class="sec">${linksHtml(ln)}</div>` : '');
+      pbody.innerHTML = html;
+      wireLinks(ln);
+    } else if (sel.kind === 'room') {
+      const r = sh.rooms.find((x) => x.id === sel.id);
+      const syms = sh.symbols.filter((s) => s.room === r.id);
+      const rs = ROOM_SHEETS[r.id];
+      const ln = [{ sheet: rs.sch, label: 'Schematic', icon: 'timeline', primary: true, ref: { kind: 'room', id: r.id } }, { sheet: rs.elev, label: 'Elevation', icon: 'view_quilt', ref: { kind: 'room', id: r.id } }];
+      const groups = {};
+      syms.forEach((s) => { (groups[s.tag] = groups[s.tag] || []).push(s); });
+      html = head(`Room ${r.number}`, esc(r.name.replace(' - ', ' · ')), esc(r.note)) +
+        `<div class="sec">${linksHtml(ln)}</div>` +
+        `<div class="sec"><div class="sec-h"><span>AV in this room</span><span>${Object.keys(groups).length}</span></div><div class="rows">${Object.entries(groups).map(([tag, ss]) =>
+          `<button class="row" data-sym="${esc(tag)}"><span class="pn">${esc(ss[0].kind.replace(/ \d of \d$/, ''))}${ss.length > 1 ? ` ×${ss.length}` : ''}</span><span class="to">${tag === 'BEHIND' ? esc(ss[0].tags.join(', ')) : `<b>${esc(tag)}</b>`}</span></button>`).join('')}</div></div>`;
+      pbody.innerHTML = html;
+      pbody.querySelectorAll('[data-go]').forEach((b) => b.onclick = () => { const l = ln[+b.dataset.go]; openSheet(l.sheet); });
+      pbody.querySelectorAll('[data-sym]').forEach((b) => b.onclick = () => select({ kind: 'symbol', sheet: v.sheet, tag: b.dataset.sym, room: r.id }, { zoom: true }));
+    } else if (sel.kind === 'symbol') {
+      const sym = sh.symbols.find((s) => s.tag === sel.tag && s.room === sel.room);
+      const rs = ROOM_SHEETS[sel.room];
+      const r = sh.rooms.find((x) => x.id === sel.room);
+      if (sel.tag === 'BEHIND') {
+        html = head(`Room ${esc(r.name.split(' - ')[0])}`, 'Behind the display', 'Concealed on the SKS tray. Not shown on plans; see the elevation.') +
+          `<div class="sec"><div class="rows">${sym.tags.map((t) => { const d = devOn(rs.sch, t); return `<button class="row" data-dev="${t}"><span class="pn">${t}</span><span class="to">${d ? esc(d.make + ' ' + d.model) : ''}</span></button>`; }).join('')}</div></div>` +
+          `<div class="sec">${linksHtml([{ sheet: rs.elev, label: 'See it on the wall', icon: 'view_quilt', primary: true }])}</div>`;
+        pbody.innerHTML = html;
+        pbody.querySelectorAll('[data-dev]').forEach((b) => b.onclick = () => goTo(rs.sch, { kind: 'device', tag: b.dataset.dev }));
+        pbody.querySelector('[data-go]').onclick = () => openSheet(rs.elev);
+      } else {
+        const d = devOn(rs.sch, sel.tag);
+        const ln = [{ sheet: rs.sch, label: 'Trace on schematic', icon: 'timeline', primary: true, ref: { kind: 'device', tag: sel.tag } }];
+        const el = T.sheets[rs.elev];
+        if ((el.marks || []).concat(el.items || []).some((m) => m.tag === sel.tag)) ln.push({ sheet: rs.elev, label: 'On the wall', icon: 'view_quilt', ref: { kind: 'device', tag: sel.tag } });
+        html = head(`${esc(sym.kind)} · room ${esc(r.name.split(' - ')[0])}`, esc(sel.tag), d ? esc([d.make, d.model, d.desc].filter(Boolean).join(' · ')) : '') +
+          `<div class="sec"><div class="muted">Plans carry no device IDs (SKS convention). The tag comes from the room's schematic, ${rs.sch}.</div></div>` +
+          `<div class="sec">${linksHtml(ln)}</div>`;
+        pbody.innerHTML = html;
+        wireLinks(ln);
+      }
+    }
+    const x = $('pClose'); if (x) x.onclick = () => { S.planRoom = null; select(null); if (kind() === 'plan') renderBar(); };
+    setSheetH(isPhone() ? 'peek' : null);
+  }
+  function wireRows() {
+    pbody.querySelectorAll('[data-cab]').forEach((b) => b.onclick = () => select({ kind: 'cable', id: b.dataset.cab }, { zoom: true }));
+  }
+
+  // ---------------------------------------------------------------- phone bottom sheet
+  let sheetState = 'min';
+  function setSheetH(st) {
+    if (!isPhone()) { sheetH = 0; panel.style.removeProperty('--sheet-h'); return; }
+    if (st === null) st = 'min';
+    if (typeof st === 'number') { sheetState = 'min'; sheetH = st; }
+    else {
+      sheetState = st;
+      const avail = $('canvas').getBoundingClientRect().height;
+      sheetH = st === 'full' ? Math.round(avail * 0.74) : st === 'peek' ? Math.min(Math.round(avail * 0.38), 268) : 64;
+    }
+    document.documentElement.style.setProperty('--sheet-h', sheetH + 'px');
+    clearTimeout(setSheetH.t);
+    setSheetH.t = setTimeout(() => { if (S.sel) ensureVisible(); }, 260);
+  }
+  (function dragSheet() {
+    const g = $('grab');
+    let y0 = 0, h0 = 0, dragging = false, moved = 0;
+    g.addEventListener('pointerdown', (e) => { dragging = true; moved = 0; y0 = e.clientY; h0 = sheetH; g.setPointerCapture(e.pointerId); panel.classList.add('dragging'); });
+    g.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      moved = Math.abs(e.clientY - y0);
+      const avail = $('canvas').getBoundingClientRect().height;
+      const h = Math.max(56, Math.min(avail * 0.8, h0 + (y0 - e.clientY)));
+      document.documentElement.style.setProperty('--sheet-h', h + 'px');
+    });
+    g.addEventListener('pointerup', (e) => {
+      if (!dragging) return;
+      dragging = false; panel.classList.remove('dragging');
+      const avail = $('canvas').getBoundingClientRect().height;
+      const h = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-h'));
+      if (moved < 6) setSheetH(sheetState === 'full' ? (S.sel ? 'peek' : 'min') : 'full');
+      else setSheetH(h > avail * 0.56 ? 'full' : h > 120 ? 'peek' : 'min');
+    });
+  })();
+  addEventListener('resize', () => setSheetH(isPhone() ? (S.sel ? sheetState : 'min') : null));
+
+  // ---------------------------------------------------------------- search (cables, units, rooms, drawings)
+  const q = $('q'), results = $('results');
+  let kb = -1, hits = [];
+  function runSearch() {
+    const s = q.value.trim().toUpperCase();
+    if (!s) { results.classList.remove('on'); return; }
+    hits = [];
+    Object.values(T.cables).forEach((c) => { if (c.id.startsWith(s) || c.id.replace(/0+/, '') === s || (c.badge || '').toUpperCase().includes(s)) hits.push({ t: c.id, s: `${c.badge} · ${c.ends[0].dev} → ${c.ends[1].dev}`, where: c.sheet, go: () => goTo(c.sheet, { kind: 'cable', id: c.id }), g: 'Cables' }); });
+    ['AVS01', 'AVS02'].forEach((sid) => (T.sheets[sid].devices || []).forEach((d) => {
+      const hay = [d.tag, d.make, d.model, d.desc].join(' ').toUpperCase();
+      if (hay.includes(s)) hits.push({ t: d.tag, s: [d.make, d.model].join(' '), where: sid + ' · ' + PAIRS[sid].room, go: () => goTo(sid, { kind: 'device', tag: d.tag }), g: 'Units' });
+    }));
+    T.sheets.AVF01.rooms.forEach((r) => { if ((r.name + ' ' + r.number + ' ' + r.id).toUpperCase().includes(s)) hits.push({ t: r.name.replace(' - ', ' · '), s: 'Room ' + r.number, where: 'AVF01', go: () => goTo('AVF01', { kind: 'room', id: r.id }), g: 'Rooms' }); });
+    Object.entries(NAMES).forEach(([id, [n]]) => { if ((id + ' ' + n).toUpperCase().includes(s)) hits.push({ t: id, s: n, where: '', go: () => openSheet(id), g: 'Drawings' }); });
+    hits = hits.slice(0, 14);
+    kb = hits.length ? 0 : -1;
+    let last = '';
+    results.innerHTML = hits.length ? hits.map((h, i) => { const hh = h.g !== last ? `<div class="res-h">${h.g}</div>` : ''; last = h.g; return hh + `<button class="res ${i === kb ? 'kb' : ''}" data-i="${i}"><span><div class="t">${esc(h.t)}</div><div class="s">${esc(h.s)}</div></span><span class="where">${esc(h.where)}</span></button>`; }).join('') : '<div class="res-h">Nothing matches</div>';
+    results.classList.add('on');
+    results.querySelectorAll('.res').forEach((b) => b.onclick = () => pick(+b.dataset.i));
+  }
+  function pick(i) { const h = hits[i]; if (!h) return; results.classList.remove('on'); q.value = ''; q.blur(); $('hdr').classList.remove('searching'); h.go(); }
+  q.addEventListener('input', runSearch);
+  q.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); kb = Math.max(0, Math.min(hits.length - 1, kb + (e.key === 'ArrowDown' ? 1 : -1))); results.querySelectorAll('.res').forEach((b, i) => b.classList.toggle('kb', i === kb)); }
+    if (e.key === 'Enter') pick(kb);
+    if (e.key === 'Escape') { q.value = ''; results.classList.remove('on'); q.blur(); $('hdr').classList.remove('searching'); }
+  });
+  q.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== q) { results.classList.remove('on'); if (!q.value) $('hdr').classList.remove('searching'); } }, 180));
+  $('qOpen').onclick = () => { $('hdr').classList.add('searching'); q.focus(); };
+  addEventListener('keydown', (e) => {
+    if (e.target === q) return;
+    if (e.key === '/') { e.preventDefault(); q.focus(); }
+    if (e.key === 'Escape') { S.planRoom = null; select(null); }
+    if (e.key === 'f') v.zoomToFit();
+  });
+
+  $('zIn').onclick = () => v.zoomBy(1.6);
+  $('zOut').onclick = () => v.zoomBy(1 / 1.6);
+  $('zFit').onclick = () => v.zoomToFit();
+
+  // ---------------------------------------------------------------- deep links: #AVS01/cable/V002
+  function syncHash() {
+    const s = S.sel;
+    const part = !s ? '' : s.kind === 'cable' || s.kind === 'port' ? '/cable/' + (s.cable || s.id) : s.kind === 'device' ? '/unit/' + s.tag : s.kind === 'room' ? '/room/' + s.id : s.kind === 'symbol' ? '/unit/' + s.tag + '@' + s.room : '';
+    history.replaceState(null, '', '#' + v.sheet + part);
+  }
+  async function fromHash() {
+    const m = location.hash.slice(1).split('/');
+    const sheet = T.sheets[m[0]] ? m[0] : 'AVS01';
+    await openSheet(sheet);
+    if (m[1] === 'cable' && T.cables[m[2]]) select({ kind: 'cable', id: m[2] }, { zoom: true });
+    else if (m[1] === 'unit' && m[2]) {
+      const [tag, room] = m[2].split('@');
+      if (room) { S.planRoom = room; renderBar(); select({ kind: 'symbol', sheet, tag, room }, { zoom: true }); }
+      else select({ kind: 'device', tag }, { zoom: true });
+    } else if (m[1] === 'room' && m[2]) selectRoom(m[2], true);
+  }
+  window.v = v; window.T = T; window.viewerSelect = select; window.viewerOpen = openSheet;
+  await fromHash();
+  document.title = 'Drawings · ' + T.project.number + ' · SKS';
+  document.body.dataset.ready = '1';
+})();
+</script>
+</body>
+</html>

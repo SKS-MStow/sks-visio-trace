@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F335C">
+<title>Option 1 · Thumb Trace — SKS Visio Trace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@500;700;900&family=Mulish:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+<link rel="stylesheet" href="shared/vt.css">
+<style>
+:root {
+  --top-h: 56px;
+  --rail-w: 92px;
+  --panel-w: 372px;
+  --dock-h: 0px;
+  --key-gap: 6px;
+}
+
+/* ================================================================ desktop (default) */
+.topbar { position: fixed; top: 0; left: 0; right: 0; height: calc(var(--top-h) + var(--safe-top)); padding: var(--safe-top) 16px 0 6px;
+  background: #fff; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; z-index: 20; }
+.topbar .logo { height: 28px; width: auto; display: block; }
+.topbar .mark { display: none; height: 20px; width: auto; }
+.topbar .sep { width: 1px; height: 26px; background: var(--line-strong); }
+.proj { min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
+.proj b { font: 700 13px/1.2 var(--font-head); letter-spacing: .02em; color: var(--sks-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.proj span { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar .spacer { flex: 1; }
+.topbar .opt-mark { white-space: nowrap; }
+
+#stage { position: fixed; top: calc(var(--top-h) + var(--safe-top)); left: var(--rail-w); right: var(--panel-w); bottom: 0; }
+
+/* ---------- signal dock (vertical rail on desktop) */
+.dock { position: fixed; z-index: 15; background: #fff; touch-action: none; user-select: none; -webkit-user-select: none;
+  top: calc(var(--top-h) + var(--safe-top)); left: 0; bottom: 0; width: var(--rail-w); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: stretch; padding: 12px 10px calc(12px + var(--safe-bottom)) calc(10px + var(--safe-left)); gap: var(--key-gap); }
+.dock-cap { font: 700 10px/1.2 var(--font-head); letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); text-align: center; padding: 2px 0 4px; }
+.dock-hint { margin-top: auto; font-size: 10.5px; line-height: 1.35; color: var(--text-3); text-align: center; }
+.key { position: relative; border: 1.5px solid var(--sks-navy); background: var(--sks-navy); color: #fff; border-radius: 9px; cursor: pointer;
+  min-height: 58px; min-width: 44px; padding: 6px 2px 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  transition: background .12s, color .12s, border-color .12s, transform .08s; touch-action: none; }
+.key .pfx { font: 900 19px/1 var(--font-head); letter-spacing: .01em; position: relative; }
+.key .word { font: 700 10px/1 var(--font); letter-spacing: .01em; white-space: nowrap; }
+.key .n { position: absolute; top: 3px; right: 5px; font: 700 9.5px/1 var(--font-head); opacity: .7; }
+.key.is-off { background: #fff; color: var(--text-3); border: 1.5px dashed var(--line-strong); }
+.key.is-off .pfx::after { content: ''; position: absolute; left: -4px; right: -4px; top: 50%; height: 2px; background: currentColor; transform: rotate(-24deg); }
+.key.is-off .word::after { content: ' off'; }
+.key.is-empty:not(.is-off) { background: var(--sks-slate); border-color: var(--sks-slate); }
+.key.is-empty .n { opacity: .45; }
+.key.is-solo { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--sks-purple); }
+.key.is-pressed { transform: scale(.94); }
+.key:focus-visible { outline: 3px solid var(--sks-purple); outline-offset: 2px; }
+
+/* ---------- tray = trace card + floating thumb controls */
+.tray { position: fixed; z-index: 16; top: calc(var(--top-h) + var(--safe-top)); right: 0; bottom: 0; width: var(--panel-w); }
+.card { position: absolute; inset: 0; background: #fff; border-left: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; }
+.grab { flex: none; display: flex; align-items: center; gap: 4px; padding: 6px 8px 4px; touch-action: none; position: relative; border-bottom: 1px solid var(--line); }
+.grab .handle { display: none; }
+.sheet-nav { flex: 1; min-width: 0; text-align: center; overflow: hidden; }
+.sheet-nav .sheet-id { font: 900 14px/1.1 var(--font-head); letter-spacing: .04em; color: var(--sks-navy); white-space: nowrap; display: block; }
+.sheet-nav .sheet-title { font-size: 11.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.sheet-nav .dots { display: flex; justify-content: center; gap: 5px; margin-top: 4px; }
+.sheet-nav .dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--line-strong); transition: width .15s, background .15s; }
+.sheet-nav .dots i.on { width: 16px; background: var(--sks-navy); }
+.sheet-inner { transition: transform .18s ease, opacity .18s; }
+.ibtn { flex: none; width: 44px; height: 44px; border-radius: 10px; border: 0; background: transparent; color: var(--sks-navy); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.ibtn:active { background: var(--sks-light); }
+.ibtn:disabled { opacity: .3; cursor: default; }
+
+.summary { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 14px; min-height: 72px; }
+.summary .sum-main { flex: 1; min-width: 0; }
+.sum-l1 { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: nowrap; }
+.sum-l1 .tag { font: 900 17px/1.1 var(--font-head); letter-spacing: .02em; color: var(--sks-navy); white-space: nowrap; }
+.sum-l1 .badge { font: 700 12px/1 var(--font-head); color: var(--sks-navy); border: 1.5px solid var(--sks-navy); border-radius: 4px; padding: 4px 6px; background: var(--sks-light); white-space: nowrap; }
+.sum-l1 .mm { font-size: 13px; font-weight: 700; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.sum-l2 { margin-top: 5px; font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sum-l2 .arrow { color: var(--sks-purple); font-weight: 800; padding: 0 2px; }
+.sum-l2 .muted, .muted { color: var(--text-2); font-weight: 600; }
+.sum-idle .sum-l1 { font: 700 14px/1.3 var(--font-head); color: var(--sks-navy); white-space: normal; }
+.sum-idle .sum-l2 { white-space: normal; }
+.sum-acts { display: flex; gap: 0; flex: none; margin-left: auto; margin-right: -4px; }
+body.hand-left .sum-acts { order: -1; margin-left: -4px; margin-right: 2px; }
+.sum-l1 { min-height: 44px; }
+.backbtn { height: 44px; border: 0; background: transparent; color: var(--sks-navy); font: 700 12px/1 var(--font-head); display: inline-flex; align-items: center; gap: 2px; padding: 0 6px 0 2px; cursor: pointer; border-radius: 10px; white-space: nowrap; }
+.backbtn .msi { font-size: 18px; }
+.backbtn:active { background: var(--sks-light); }
+.sum-l2 { margin-top: 2px; }
+
+.body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; border-top: 1px solid var(--line); -webkit-overflow-scrolling: touch; }
+.sec { padding: 12px 14px 4px; }
+.sec h3 { font: 700 11px/1.2 var(--font-head); letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+.sec h3 .ct { color: var(--text-2); }
+.rows { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.row { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 7px 10px 7px 12px; background: #fff; border: 0; border-top: 1px solid var(--line); text-align: left; width: 100%; }
+.row:first-child { border-top: 0; }
+button.row { cursor: pointer; }
+button.row:active, button.row.is-sel { background: var(--sks-light); }
+button.row.is-sel { box-shadow: inset 3px 0 0 var(--sks-purple); }
+.row .port { flex: 0 0 104px; min-width: 0; }
+.row .port b { display: block; font: 700 12.5px/1.2 var(--font-head); color: var(--sks-navy); letter-spacing: .01em; }
+.row .port small { display: block; font-size: 11px; color: var(--text-3); font-weight: 600; }
+.row .conn { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.row .conn .top { display: flex; align-items: center; gap: 6px; }
+.row .conn .peer { font-size: 12.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .conn .peer .muted { font-weight: 600; }
+.row .go { color: var(--text-3); font-size: 20px; }
+.row.is-spare .port b { color: var(--text-3); }
+.row.is-spare .conn { color: var(--text-3); font-size: 12px; font-style: italic; }
+.row.is-hidden { opacity: .55; }
+.row .hid { font-size: 10.5px; font-weight: 800; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
+.mini-badge { font: 700 10.5px/1 var(--font-head); color: var(--sks-navy); border: 1px solid var(--sks-navy); border-radius: 3px; padding: 3px 4px; white-space: nowrap; }
+.chip-id { font-size: 11.5px; padding: 3px 6px 3px 4px; }
+.pfx-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 18px; padding: 0 4px; border-radius: 4px; background: var(--sks-navy); color: #fff; font: 700 10.5px/1 var(--font-head); }
+
+.unit-row .ut { flex: 0 0 74px; font: 900 13.5px/1.2 var(--font-head); color: var(--sks-navy); }
+.unit-row .ud { flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-2); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.unit-row .uc { font: 700 11.5px/1 var(--font-head); color: var(--text-2); white-space: nowrap; }
+
+.end { display: flex; align-items: center; gap: 12px; padding: 10px 12px; min-height: 64px; width: 100%; text-align: left; background: #fff; border: 0; border-top: 1px solid var(--line); cursor: pointer; }
+.end:first-child { border-top: 0; }
+.end:active { background: var(--sks-light); }
+.end .lbl { flex: 0 0 38px; font: 700 10.5px/1 var(--font-head); letter-spacing: .08em; color: var(--text-3); }
+.end .what { flex: 1; min-width: 0; }
+.end .what b { font: 900 15px/1.2 var(--font-head); color: var(--sks-navy); }
+.end .what .p { display: block; font-size: 13px; font-weight: 700; color: var(--text); margin-top: 2px; }
+.end .what .m { display: block; font-size: 12px; color: var(--text-2); font-weight: 600; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.end.is-free { cursor: default; }
+.label-strip { margin: 0 0 4px; word-break: break-word; }
+.kv { display: grid; grid-template-columns: 96px 1fr; gap: 6px 10px; font-size: 13px; padding: 2px 2px 8px; }
+.kv dt { color: var(--text-3); font-weight: 700; font-size: 12px; }
+.kv dd { margin: 0; font-weight: 700; color: var(--text); }
+.note { display: flex; align-items: center; gap: 10px; background: var(--sks-light); border-radius: var(--radius); padding: 8px 8px 8px 12px; font-size: 12.5px; font-weight: 600; color: var(--text-2); margin-bottom: 10px; }
+.note .msi { color: var(--sks-dusty); font-size: 20px; }
+.note span { flex: 1; }
+.tbtn { min-height: 44px; padding: 0 14px; border-radius: 9px; border: 1.5px solid var(--sks-navy); background: #fff; color: var(--sks-navy); font: 700 13px/1 var(--font); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.tbtn.solid { background: var(--sks-navy); color: #fff; }
+.tbtn:active { transform: scale(.97); }
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 6px; }
+
+.seg { display: inline-flex; border: 1.5px solid var(--sks-navy); border-radius: 9px; overflow: hidden; }
+.seg button { min-height: 40px; min-width: 64px; padding: 0 12px; border: 0; background: #fff; color: var(--sks-navy); font: 700 13px/1 var(--font); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.seg button[aria-pressed="true"] { background: var(--sks-navy); color: #fff; }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; border-top: 1px solid var(--line); }
+.set-row:first-of-type { border-top: 0; }
+.set-row .sl { font-size: 13px; font-weight: 700; }
+.set-row .sl small { display: block; font-weight: 600; font-size: 11.5px; color: var(--text-3); }
+.foot { padding: 6px 14px calc(16px + var(--safe-bottom)); font-size: 11.5px; color: var(--text-3); }
+
+/* ---------- floating thumb controls */
+.thumb { position: fixed; z-index: 14; bottom: 16px; right: calc(var(--panel-w) + 16px); display: grid; grid-template-columns: 48px 48px; gap: 8px; }
+body.hand-left .thumb { right: auto; left: calc(var(--rail-w) + 16px); }
+body.hand-left .thumb { direction: rtl; }
+.fbtn { width: 48px; height: 48px; border-radius: 12px; border: 1px solid var(--line-strong); background: #fff; color: var(--sks-navy); box-shadow: var(--shadow);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; direction: ltr; position: relative; }
+.fbtn:active { background: var(--sks-light); }
+.fbtn.sheet-btn { flex-direction: column; gap: 1px; font: 900 11px/1 var(--font-head); letter-spacing: .03em; }
+.fbtn.sheet-btn .msi { font-size: 18px; }
+.picker { position: absolute; bottom: calc(100% + 8px); right: 0; background: #fff; border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: var(--shadow-lg);
+  min-width: 248px; padding: 4px; display: none; direction: ltr; }
+body.hand-left .picker { right: auto; left: 0; }
+.picker.open { display: block; }
+.picker button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; border: 0; background: #fff; border-radius: 8px; padding: 0 10px; text-align: left; cursor: pointer; }
+.picker button b { font: 900 13px/1 var(--font-head); color: var(--sks-navy); flex: 0 0 48px; }
+.picker button span { font-size: 12.5px; font-weight: 600; color: var(--text-2); }
+.picker button[aria-current="true"] { background: var(--sks-light); }
+.picker button[aria-current="true"] b::after { content: ' •'; color: var(--sks-purple); }
+
+/* ================================================================ phone */
+@media (max-width: 768px) {
+  :root { --top-h: 44px; --dock-h: calc(70px + var(--safe-bottom)); }
+  .topbar { padding: var(--safe-top) calc(10px + var(--safe-right)) 0 calc(0px + var(--safe-left)); gap: 6px; }
+  .topbar .logo, .topbar .sep { display: none; }
+  .topbar .mark { display: block; }
+  .proj b { font-size: 12px; }
+  .proj span { display: none; }
+  .topbar .opt-mark { font-size: 10px; letter-spacing: .05em; }
+  #stage { left: 0; right: 0; bottom: var(--dock-h); }
+
+  .dock { top: auto; bottom: 0; right: 0; width: auto; height: var(--dock-h); flex-direction: row; border-right: 0; border-top: 1px solid var(--line);
+    padding: 7px calc(8px + var(--safe-right)) calc(7px + var(--safe-bottom)) calc(8px + var(--safe-left)); }
+  .dock-cap, .dock-hint { display: none; }
+  .key { flex: 1 1 0; min-width: 0; min-height: 56px; }
+  .key .pfx { font-size: 18px; }
+  .key .word { font-size: 9.5px; }
+  .key.is-off .word::after { content: ''; }
+
+  .tray { top: auto; left: 0; right: 0; width: auto; bottom: var(--dock-h); }
+  .card { position: relative; inset: auto; border-left: 0; border-radius: 16px 16px 0 0; box-shadow: 0 -2px 14px rgba(31,51,92,.12); border-top: 1px solid var(--line);
+    height: var(--card-h, auto); transition: height .22s cubic-bezier(.2,.8,.2,1); }
+  .card.dragging { transition: none; }
+  .grab { padding: 10px 6px 0; border-bottom: 0; cursor: grab; }
+  .grab .handle { display: block; position: absolute; top: 5px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 2px; background: var(--line-strong); }
+  .sheet-nav .sheet-id { font-size: 13px; display: inline; }
+  .sheet-nav .sheet-title { display: inline; font-size: 11.5px; }
+  .sheet-nav .sheet-title::before { content: ' · '; }
+  .sheet-nav .dots { margin-top: 3px; }
+  .summary { min-height: 64px; padding: 4px 6px 8px 14px; }
+  .summary { padding: 0 10px 8px 14px; }
+  .sum-l1 { gap: 6px; }
+  .sum-l1 .cls-pill .cw { display: none; }
+  .body { border-top: 1px solid var(--line); }
+
+  .thumb { position: absolute; bottom: calc(100% + 10px); right: calc(10px + var(--safe-right)); transition: opacity .15s, transform .15s; }
+  /* pulled-up card: the list has the user's attention; the cluster steps aside so it never sits on the small drawing strip */
+  .tray:has(.card.is-expanded) .thumb { opacity: 0; transform: translateY(12px); pointer-events: none; visibility: hidden; }
+  body.hand-left .thumb { left: calc(10px + var(--safe-left)); right: auto; }
+  .row .port { flex-basis: 96px; }
+}
+</style>
+</head>
+<body class="hand-right">
+
+<header class="topbar">
+  <a class="back-link" href="./" aria-label="Back to all options"><span class="msi">arrow_back</span></a>
+  <img class="logo" src="assets/sks-logo.svg" alt="SKS Technologies">
+  <img class="mark" src="assets/sks-mark.png" alt="SKS">
+  <span class="sep"></span>
+  <div class="proj"><b id="projLine">SKS project</b><span id="sheetLine"></span></div>
+  <span class="spacer"></span>
+  <span class="opt-mark">Option 1 · Thumb Trace</span>
+</header>
+
+<main id="stage" aria-label="Drawing"></main>
+
+<nav class="dock" id="dock" aria-label="Signal classes">
+  <div class="dock-cap">Signals</div>
+  <div class="dock-hint">Tap to hide<br>Hold to solo<br>Swipe to paint</div>
+</nav>
+
+<section class="tray" id="tray">
+  <div class="thumb" id="thumb">
+    <button class="fbtn sheet-btn" id="sheetBtn" aria-haspopup="true" aria-expanded="false" aria-label="Choose sheet"><span class="msi">layers</span><span id="sheetBtnId">AVS01</span></button>
+    <button class="fbtn" id="fitBtn" aria-label="Fit sheet"><span class="msi">fit_screen</span></button>
+    <button class="fbtn" id="zoomOut" aria-label="Zoom out"><span class="msi">remove</span></button>
+    <button class="fbtn" id="zoomIn" aria-label="Zoom in"><span class="msi">add</span></button>
+    <div class="picker" id="picker" role="menu"></div>
+  </div>
+  <div class="card" id="card">
+    <div class="grab" id="grab">
+      <span class="handle"></span>
+      <button class="ibtn" id="prevSheet" aria-label="Previous sheet"><span class="msi">chevron_left</span></button>
+      <div class="sheet-nav" id="sheetNav"><div class="sheet-inner" id="sheetInner"></div></div>
+      <button class="ibtn" id="nextSheet" aria-label="Next sheet"><span class="msi">chevron_right</span></button>
+    </div>
+    <div class="summary" id="summary"></div>
+    <div class="body" id="body"></div>
+  </div>
+</section>
+
+<script src="shared/vt.js"></script>
+<script>
+(async () => {
+  const $ = (s, r) => (r || document).querySelector(s);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const mq = matchMedia('(max-width: 768px)');
+  const isPhone = () => mq.matches;
+  const CLS = ['video', 'audio', 'control', 'network', 'usb', 'spk', 'power'];
+  const WORD = { video: 'Video', audio: 'Audio', control: 'Control', network: 'Network', usb: 'USB', spk: 'Speaker', power: 'Power' };
+  const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+  const nice = (s) => String(s || '').split(' ').map((w) => (/^[A-Z][A-Z-]{3,}$/.test(w) ? w.split('-').map((p) => p[0] + p.slice(1).toLowerCase()).join('-') : w)).join(' ');
+
+  const T = await VT.load('data/drawing.json');
+  window.T = T;
+  const stage = $('#stage'), card = $('#card'), thumb = $('#thumb'), dock = $('#dock');
+  $('#projLine').textContent = T.project.number + ' · ' + T.project.name;
+  document.title = 'Option 1 · Thumb Trace — ' + T.project.number;
+
+  // ---------------------------------------------------------------- insets: card + thumb cluster
+  // The thumb cluster sits above the card on the thumb side; everything below its top edge is
+  // treated as covered, so fits and focus zooms land in the clear drawing area above it.
+  function insets() {
+    const S = stage.getBoundingClientRect();
+    const tTop = thumb.getBoundingClientRect().top;
+    const hiddenCluster = isPhone() && card.classList.contains('is-expanded');
+    let bottom = hiddenCluster ? 0 : Math.max(0, S.bottom - tTop + 8);
+    if (isPhone()) bottom = Math.max(bottom, S.bottom - card.getBoundingClientRect().top + 8);
+    return { top: 8, right: isPhone() ? 4 : 8, bottom, left: isPhone() ? 4 : 8 };
+  }
+
+  const v = VT.create(T, stage, { sheet: 'AVS01', insets });
+  window.v = v;
+  await v.ready;
+
+  // ---------------------------------------------------------------- helpers over the data
+  const sheetIds = T.sheetList.map((s) => s.id);
+  const sheetOf = (id) => T.sheets[id];
+  const shortTitle = (s) => s.title.replace(/^\S+\s*-\s*/, '');
+  // a unit's "home" schematic: the first schematic sheet that draws it
+  const home = (tag) => { const w = T.where(tag).find((x) => x.kind === 'schematic'); return w ? w.sheet : null; };
+  function devInfo(tag, sheetId) {
+    sheetId = sheetId || v.sheet;
+    const s = sheetOf(sheetId);
+    const here = (s.devices || []).find((d) => d.tag === tag);
+    if (here) return here;
+    const h = home(tag);
+    return h ? sheetOf(h).devices.find((d) => d.tag === tag) : T.devices[tag] || null;
+  }
+  // which schematic a selection on this sheet belongs to
+  const ctxSheet = (tag) => (sheetOf(v.sheet).kind === 'schematic' ? v.sheet : home(tag));
+  const unitCables = (tag) => { const sid = ctxSheet(tag); return sid ? (sheetOf(sid).cables || []).filter((c) => c.ends.some((e) => e.dev === tag)) : []; };
+  const unitServices = (tag) => { const sid = ctxSheet(tag); return sid ? (sheetOf(sid).services || []).filter((s) => s.dev === tag) : []; };
+  const cableOf = (ref) => (ref && (ref.kind === 'cable' ? T.cables[ref.id] : ref.kind === 'port' ? T.cables[ref.cable] : null));
+  const chip = (id) => `<span class="chip-id">${esc(id)}</span>`;
+  const pfx = (cls) => `<span class="pfx-pill">${esc(T.classes[cls].prefix)}</span>`;
+  const mm = (d) => d ? [nice(d.make), d.model].filter(Boolean).join(' ') : '';
+  const hidden = () => new Set(v.hidden);
+
+  // ---------------------------------------------------------------- state
+  const st = {
+    expanded: !isPhone(),
+    back: null,          // unit we came from when drilling into one of its cables
+    hand: localStorage.getItem('vt1-hand') === 'left' ? 'left' : 'right',
+  };
+  document.body.classList.toggle('hand-left', st.hand === 'left');
+  document.body.classList.toggle('hand-right', st.hand === 'right');
+
+  // ---------------------------------------------------------------- signal dock
+  CLS.forEach((c) => {
+    const b = document.createElement('button');
+    b.className = 'key'; b.dataset.cls = c; b.type = 'button';
+    b.innerHTML = `<span class="n"></span><span class="pfx">${T.classes[c].prefix}</span><span class="word">${WORD[c]}</span>`;
+    dock.insertBefore(b, $('.dock-hint', dock));
+  });
+  const keys = [...dock.querySelectorAll('.key')];
+  const soloOf = () => { const h = hidden(); const shown = CLS.filter((c) => !h.has(c)); return shown.length === 1 ? shown[0] : null; };
+  function countOn(c, sid) {
+    const s = sheetOf(sid || v.sheet);
+    return c === 'power' ? (s.services || []).length : (s.cables || []).filter((x) => x.cls === c).length;
+  }
+  function paintDock() {
+    const h = hidden(), solo = soloOf();
+    keys.forEach((k) => {
+      const c = k.dataset.cls, n = countOn(c);
+      k.classList.toggle('is-off', h.has(c));
+      k.classList.toggle('is-solo', solo === c);
+      k.classList.toggle('is-empty', !n);
+      $('.n', k).textContent = n || '–';
+      k.setAttribute('aria-pressed', String(!h.has(c)));
+      k.setAttribute('aria-label', `${WORD[c]} (${T.classes[c].prefix}) ${h.has(c) ? 'hidden' : 'shown'}${solo === c ? ', solo' : ''}, ${n} on this sheet`);
+    });
+  }
+  function setHidden(list) { v.setHidden(list); }
+  const setOne = (c, show) => { const h = hidden(); show ? h.delete(c) : h.add(c); setHidden([...h]); };
+  function solo(c) {
+    if (soloOf() === c) setHidden([]);           // hold again on the solo key: everything back
+    else setHidden(CLS.filter((x) => x !== c));
+    buzz(18);
+  }
+
+  // tap = toggle, hold = solo, slide across = paint the start key's new state over every key you cross
+  let drag = null;
+  const keyAt = (x, y) => { const e = document.elementFromPoint(x, y); return e && e.closest && e.closest('.key'); };
+  dock.addEventListener('pointerdown', (e) => {
+    const k = e.target.closest('.key');
+    if (!k) return;
+    e.preventDefault();
+    try { dock.setPointerCapture(e.pointerId); } catch (err) {}
+    const c = k.dataset.cls;
+    drag = { id: e.pointerId, start: k, target: hidden().has(c), painted: new Set(), long: false, mode: 'tap' };
+    k.classList.add('is-pressed');
+    drag.timer = setTimeout(() => {
+      if (!drag || drag.mode !== 'tap') return;
+      drag.long = true; drag.mode = 'done';
+      k.classList.remove('is-pressed');
+      solo(c);
+    }, 460);
+  });
+  dock.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id || drag.mode === 'done') return;
+    const k = keyAt(e.clientX, e.clientY);
+    if (!k) return;
+    if (drag.mode === 'tap' && k !== drag.start) {
+      clearTimeout(drag.timer);
+      drag.mode = 'paint';
+      drag.start.classList.remove('is-pressed');
+      setOne(drag.start.dataset.cls, drag.target);
+      drag.painted.add(drag.start);
+    }
+    if (drag.mode === 'paint' && !drag.painted.has(k)) {
+      drag.painted.add(k);
+      setOne(k.dataset.cls, drag.target);
+      buzz(6);
+    }
+  });
+  const dockEnd = (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    clearTimeout(drag.timer);
+    drag.start.classList.remove('is-pressed');
+    if (drag.mode === 'tap' && e.type === 'pointerup') v.toggleClass(drag.start.dataset.cls);
+    drag = null;
+  };
+  dock.addEventListener('pointerup', dockEnd);
+  dock.addEventListener('pointercancel', dockEnd);
+  dock.addEventListener('click', (e) => { const k = e.target.closest('.key'); if (k && e.detail === 0) v.toggleClass(k.dataset.cls); }); // keyboard
+  dock.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // ---------------------------------------------------------------- sheet switching
+  function sheetIdx() { return sheetIds.indexOf(v.sheet); }
+  async function goSheet(id, dir) {
+    if (!id || id === v.sheet) return;
+    const from = v.sheet, ref = v.selected;
+    closePicker();
+    const inner = $('#sheetInner');
+    if (dir) { inner.style.transition = 'none'; inner.style.transform = `translateX(${dir * 40}px)`; inner.style.opacity = '.2'; }
+    await v.setSheet(id);
+    requestAnimationFrame(() => { inner.style.transition = ''; inner.style.transform = ''; inner.style.opacity = ''; });
+    // units are linked across sheets by tag: a unit picked on the schematic stays picked on its elevation and back
+    let keep = null;
+    if (ref && ref.kind === 'device') {
+      const tag = ref.tag, h = home(tag), to = sheetOf(id), fr = sheetOf(from);
+      const onTo = T.where(tag).some((w) => w.sheet === id);
+      const linked = (to.kind === 'elevation' && (fr.id === h || fr.kind === 'elevation')) || (id === h && fr.kind === 'elevation');
+      if (onTo && linked) keep = { kind: 'device', tag };
+    }
+    if (keep) { v.select(keep); ensureVisible(true); } else v.clear();
+  }
+  const stepSheet = (d) => { const i = sheetIdx() + d; if (i >= 0 && i < sheetIds.length) goSheet(sheetIds[i], -d); };
+  $('#prevSheet').addEventListener('click', () => stepSheet(-1));
+  $('#nextSheet').addEventListener('click', () => stepSheet(1));
+
+  const picker = $('#picker');
+  picker.innerHTML = T.sheetList.map((s) => `<button role="menuitem" data-sheet="${s.id}"><b>${s.id}</b><span>${esc(nice(shortTitle(s)))}</span></button>`).join('');
+  picker.addEventListener('click', (e) => { const b = e.target.closest('[data-sheet]'); if (b) goSheet(b.dataset.sheet); });
+  function closePicker() { picker.classList.remove('open'); $('#sheetBtn').setAttribute('aria-expanded', 'false'); }
+  $('#sheetBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = !picker.classList.contains('open');
+    picker.classList.toggle('open', open);
+    $('#sheetBtn').setAttribute('aria-expanded', String(open));
+  });
+  document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#picker, #sheetBtn')) closePicker(); }, true);
+
+  $('#zoomIn').addEventListener('click', () => v.zoomBy(1.5));
+  $('#zoomOut').addEventListener('click', () => v.zoomBy(1 / 1.5));
+  $('#fitBtn').addEventListener('click', () => v.zoomToFit());
+
+  function paintSheet() {
+    const s = sheetOf(v.sheet), i = sheetIdx();
+    $('#sheetInner').innerHTML = `<span class="sheet-id">${s.id}</span><span class="sheet-title">${esc(nice(shortTitle(s)))}</span>
+      <span class="dots">${sheetIds.map((x, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}</span>`;
+    $('#sheetBtnId').textContent = s.id;
+    $('#sheetLine').textContent = s.title;
+    $('#prevSheet').disabled = i === 0;
+    $('#nextSheet').disabled = i === sheetIds.length - 1;
+    picker.querySelectorAll('[data-sheet]').forEach((b) => b.setAttribute('aria-current', String(b.dataset.sheet === s.id)));
+  }
+
+  // ---------------------------------------------------------------- the grabber: drag up/down, swipe sheets
+  const grab = $('#grab');
+  let g = null;
+  grab.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button')) return;
+    g = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), mode: null, h0: card.getBoundingClientRect().height };
+    try { grab.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  grab.addEventListener('pointermove', (e) => {
+    if (!g || e.pointerId !== g.id) return;
+    const dx = e.clientX - g.x, dy = e.clientY - g.y;
+    if (!g.mode && Math.hypot(dx, dy) > 10) g.mode = Math.abs(dx) > Math.abs(dy) ? 'x' : (isPhone() ? 'y' : 'none');
+    if (g.mode === 'x') {
+      $('#sheetInner').style.transition = 'none';
+      $('#sheetInner').style.transform = `translateX(${dx * 0.6}px)`;
+    } else if (g.mode === 'y') {
+      card.classList.add('dragging');
+      const h = Math.max(heights().compact, Math.min(heights().max, g.h0 - dy));
+      card.style.setProperty('--card-h', h + 'px');
+    }
+  });
+  const grabEnd = (e) => {
+    if (!g || e.pointerId !== g.id) return;
+    const dx = e.clientX - g.x, dy = e.clientY - g.y, dt = performance.now() - g.t;
+    const inner = $('#sheetInner');
+    if (g.mode === 'x') {
+      inner.style.transition = ''; inner.style.transform = '';
+      if (Math.abs(dx) > 48) stepSheet(dx < 0 ? 1 : -1);
+    } else if (g.mode === 'y') {
+      card.classList.remove('dragging');
+      const vy = dy / Math.max(1, dt);
+      const hNow = card.getBoundingClientRect().height, H = heights();
+      const want = vy < -0.4 ? true : vy > 0.4 ? false : hNow > (H.compact + H.max) / 2;
+      setExpanded(want);
+    } else if (!g.mode && e.type === 'pointerup' && isPhone()) {
+      setExpanded(!st.expanded);
+    }
+    g = null;
+  };
+  grab.addEventListener('pointerup', grabEnd);
+  grab.addEventListener('pointercancel', grabEnd);
+
+  function heights() {
+    const compact = grab.offsetHeight + $('#summary').offsetHeight;
+    const room = (stage.getBoundingClientRect().height) * 0.62;
+    const natural = compact + $('#body').scrollHeight + 1;
+    return { compact, max: Math.max(compact + 120, Math.min(room, natural)) };
+  }
+  function sizeCard() {
+    if (!isPhone()) { card.style.removeProperty('--card-h'); return; }
+    const H = heights();
+    card.style.setProperty('--card-h', (st.expanded ? H.max : H.compact) + 'px');
+  }
+  function setExpanded(on) {
+    st.expanded = on;
+    card.classList.toggle('is-expanded', on);
+    grab.setAttribute('aria-expanded', String(on));
+    sizeCard();
+    if (v.selected) setTimeout(() => ensureVisible(), 240);
+  }
+
+  // keep focus inside the clear drawing area; zoom out/pan only when part of it is covered
+  function ensureVisible(force) {
+    const f = v.focused;
+    if (!f) return;
+    const b = v.focusBox(f);
+    if (!b) return;
+    const S = stage.getBoundingClientRect(), ins = insets();
+    const [x1, y1] = v.worldToScreen(b[0], b[1]), [x2, y2] = v.worldToScreen(b[0] + b[2], b[1] + b[3]);
+    const inside = x1 >= ins.left && y1 >= ins.top && x2 <= S.width - ins.right && y2 <= S.height - ins.bottom;
+    // on a phone a whole-sheet view makes one cable a hairline: frame it if it fills less than half the clear area
+    const W = S.width - ins.left - ins.right, H = S.height - ins.top - ins.bottom;
+    const small = isPhone() && (x2 - x1) < W * 0.5 && (y2 - y1) < H * 0.5;
+    if (!inside || force || small) v.fitFocus({ maxK: small ? 1.1 : Math.max(v.cam.k, 0.55) });
+  }
+
+  // ---------------------------------------------------------------- trace card content
+  function renderCard() {
+    const ref = v.selected, sum = $('#summary'), body = $('#body');
+    const h = hidden();
+    let S = '', B = '';
+    const frameBtn = `<button class="ibtn" data-act="frame" aria-label="Zoom to selection"><span class="msi">center_focus_strong</span></button>`;
+    const clearBtn = `<button class="ibtn" data-act="clear" aria-label="Clear selection"><span class="msi">close</span></button>`;
+    const backBtn = st.back ? `<button class="backbtn" data-act="back" aria-label="Back to ${esc(st.back)}"><span class="msi">arrow_back</span>${esc(st.back)}</button>` : '';
+    const c = cableOf(ref);
+    if (c) {
+      const [a, z] = c.ends;
+      S = `<div class="sum-main">
+          <div class="sum-l1">${chip(c.id)}<span class="badge">${esc(c.badge)}</span><span class="cls-pill">${pfx(c.cls)}<span class="cw">${esc(WORD[c.cls])}</span></span>${h.has(c.cls) ? '<span class="hid">hidden</span>' : ''}<span class="sum-acts">${backBtn}${frameBtn}${clearBtn}</span></div>
+          <div class="sum-l2">${esc(a.dev)} <span class="muted">${esc(a.port)}</span><span class="arrow">→</span>${esc(z.dev)} <span class="muted">${esc(z.port === '-' ? '' : z.port)}</span></div>
+        </div>`;
+      B += `<div class="sec">${h.has(c.cls) ? `<div class="note"><span class="msi">visibility_off</span><span>${WORD[c.cls]} is switched off in the dock, so this cable is knocked out of the drawing.</span><button class="tbtn" data-act="show" data-cls="${c.cls}">Show ${T.classes[c.cls].prefix}</button></div>` : ''}
+        <h3>Cable label</h3><div class="label-strip">${esc(T.label(c))}</div></div>`;
+      B += `<div class="sec"><h3>Ends <span class="ct">tap a unit for all its connections</span></h3><div class="rows">${c.ends.map((e, i) => {
+        const d = T.where(e.dev).length ? devInfo(e.dev, c.sheet) : null;
+        const port = d && d.portMap ? d.portMap[e.port] : null;
+        if (!d) return `<div class="end is-free"><span class="lbl">${i ? 'TO' : 'FROM'}</span><span class="what"><b>${esc(e.dev)}</b><span class="p">Loose end${e.free ? ' · not a drawn unit' : ''}</span><span class="m">${esc(c.badge)} tail, terminated by user device</span></span></div>`;
+        return `<button class="end" data-dev="${esc(e.dev)}"><span class="lbl">${i ? 'TO' : 'FROM'}</span><span class="what"><b>${esc(e.dev)}</b>
+          <span class="p">${esc(e.port)}${port && port.conn ? ` <span class="muted">· ${esc(port.conn)}</span>` : ''}</span><span class="m">${esc(mm(d))}${d.desc ? ' · ' + esc(nice(d.desc)) : ''}</span></span><span class="msi go">chevron_right</span></button>`;
+      }).join('')}</div></div>`;
+      B += `<div class="sec"><h3>Detail</h3><dl class="kv"><dt>Signal</dt><dd>${esc(T.classes[c.cls].label)} (${T.classes[c.cls].prefix})</dd><dt>Cable type</dt><dd>${esc(c.cable || c.badge)}</dd><dt>Sheet</dt><dd>${esc(c.sheet)}</dd><dt>Number chips</dt><dd>${c.chips.length} on drawing</dd></dl></div>`;
+    } else if (ref && ref.kind === 'device') {
+      const tag = ref.tag, d = devInfo(tag), cs = unitCables(tag), svs = unitServices(tag);
+      const shownN = cs.filter((x) => !h.has(x.cls)).length;
+      const sid = ctxSheet(tag);
+      S = `<div class="sum-main">
+          <div class="sum-l1"><span class="tag">${esc(tag)}</span><span class="mm">${esc(mm(d))}</span><span class="sum-acts">${frameBtn}${clearBtn}</span></div>
+          <div class="sum-l2">${cs.length} connection${cs.length === 1 ? '' : 's'}${svs.length ? ` · ${svs.length} service feed${svs.length === 1 ? '' : 's'}` : ''}${shownN < cs.length ? ` <span class="muted">· ${cs.length - shownN} hidden</span>` : ''}</div>
+        </div>`;
+      const elsewhere = T.where(tag).filter((w) => w.sheet !== v.sheet && (
+        (w.kind === 'elevation' && (v.sheet === home(tag) || sheetOf(v.sheet).kind === 'elevation')) || (w.sheet === home(tag) && sheetOf(v.sheet).kind === 'elevation')));
+      B += `<div class="sec"><dl class="kv"><dt>Unit</dt><dd>${esc(mm(d) || '—')}</dd><dt>Description</dt><dd>${esc(nice(d && d.desc) || '—')}</dd>${sheetOf(v.sheet).kind === 'elevation' ? `<dt>Wiring from</dt><dd>${esc(sid || '—')}</dd>` : ''}</dl>
+        ${elsewhere.length ? `<div class="btnrow">${elsewhere.map((w) => `<button class="tbtn" data-act="sheet" data-sheet="${w.sheet}"><span class="msi">swap_horiz</span>See on ${w.sheet}</button>`).join('')}</div>` : ''}</div>`;
+      // every port of the unit, in drawing order; connected ones are tappable
+      const ports = (d && d.ports) || [];
+      const rows = ports.map((p) => {
+        const cab = cs.find((x) => x.ends.some((e) => e.dev === tag && e.port === p.name));
+        const sv = svs.find((s) => s.port === p.name);
+        if (cab) {
+          const peer = T.peer(cab, tag), sel = false;
+          return `<button class="row ${h.has(cab.cls) ? 'is-hidden' : ''}" data-cable="${cab.id}"><span class="port"><b>${esc(p.name)}</b><small>${esc(p.conn)}</small></span>
+            <span class="conn"><span class="top">${chip(cab.id)}<span class="mini-badge">${esc(cab.badge)}</span>${h.has(cab.cls) ? '<span class="hid">hidden</span>' : ''}</span>
+            <span class="peer">→ ${esc(peer.dev)} <span class="muted">${esc(peer.port === '-' ? '' : peer.port)}</span></span></span><span class="msi go">chevron_right</span></button>`;
+        }
+        if (sv) return `<div class="row ${h.has('power') ? 'is-hidden' : ''}"><span class="port"><b>${esc(p.name)}</b><small>${esc(p.conn)}</small></span><span class="conn"><span class="top">${pfx('power')}<span class="peer">${esc(sv.text)}</span></span></span></div>`;
+        return `<div class="row is-spare"><span class="port"><b>${esc(p.name)}</b><small>${esc(p.conn)}</small></span><span class="conn">spare</span></div>`;
+      });
+      // cables on ports the unit box doesn't list (e.g. speaker lines) still belong in the list
+      cs.filter((x) => !ports.some((p) => x.ends.some((e) => e.dev === tag && e.port === p.name))).forEach((cab) => {
+        const peer = T.peer(cab, tag);
+        rows.push(`<button class="row ${h.has(cab.cls) ? 'is-hidden' : ''}" data-cable="${cab.id}"><span class="port"><b>${esc(T.mine(cab, tag).port === '-' ? 'LINE' : T.mine(cab, tag).port)}</b><small>${esc(cab.cable)}</small></span>
+          <span class="conn"><span class="top">${chip(cab.id)}<span class="mini-badge">${esc(cab.badge)}</span></span><span class="peer">→ ${esc(peer.dev)} <span class="muted">${esc(peer.port)}</span></span></span><span class="msi go">chevron_right</span></button>`);
+      });
+      svs.filter((s) => !ports.some((p) => p.name === s.port)).forEach((sv) => rows.push(`<div class="row"><span class="port"><b>${esc(sv.port)}</b></span><span class="conn"><span class="top">${pfx('power')}<span class="peer">${esc(sv.text)}</span></span></span></div>`));
+      B += `<div class="sec"><h3>Ports <span class="ct">${cs.length} connected · tap one to trace it</span></h3>${rows.length ? `<div class="rows">${rows.join('')}</div>` : '<div class="note"><span class="msi">info</span><span>No port schedule on this unit.</span></div>'}</div>`;
+    } else {
+      const s = sheetOf(v.sheet), solo = soloOf(), hn = h.size;
+      const filt = solo ? `Showing ${T.classes[solo].prefix} only · hold ${T.classes[solo].prefix} again for all` : hn ? `${7 - hn} of 7 signal classes shown` : 'All signal classes shown';
+      S = `<div class="sum-main sum-idle"><div class="sum-l1">${s.kind === 'elevation' ? 'Tap a unit to see where it is wired' : 'Tap a wire for its trace, a unit for all its connections'}</div>
+        <div class="sum-l2 muted">${s.kind === 'schematic' ? `${(s.cables || []).length} cables · ` : ''}${filt}</div></div>`;
+      const units = s.kind === 'schematic' ? (s.devices || []).map((d) => d.tag) : (s.marks || []).map((m) => m.tag);
+      B += `<div class="sec"><h3>Units on ${s.id} <span class="ct">${units.length}</span></h3>${units.length ? `<div class="rows">${units.map((tag) => {
+        const d = devInfo(tag), n = unitCables(tag).length;
+        return `<button class="row unit-row" data-dev="${esc(tag)}"><span class="ut">${esc(tag)}</span><span class="ud">${esc(mm(d) || nice(d && d.desc) || '—')}</span><span class="uc">${n ? n + ' conn' : ''}</span><span class="msi go">chevron_right</span></button>`;
+      }).join('')}</div>` : `<div class="note"><span class="msi">info</span><span>This sheet is a survey hold. Nothing on it is linked yet.</span></div>`}</div>`;
+    }
+    // view settings live at the end of every state
+    B += `<div class="sec"><h3>View</h3>
+      <div class="set-row"><span class="sl">Thumb side<small>Floating controls follow your hand</small></span><span class="seg"><button data-hand="left" aria-pressed="${st.hand === 'left'}">Left</button><button data-hand="right" aria-pressed="${st.hand === 'right'}">Right</button></span></div>
+      <div class="set-row"><span class="sl">Location boxes<small>Display wall, ceiling, table</small></span><span class="seg"><button data-ov="zones" data-on="1" aria-pressed="${ov.zones}">On</button><button data-ov="zones" data-on="0" aria-pressed="${!ov.zones}">Off</button></span></div>
+      <div class="set-row"><span class="sl">Revision clouds</span><span class="seg"><button data-ov="clouds" data-on="1" aria-pressed="${ov.clouds}">On</button><button data-ov="clouds" data-on="0" aria-pressed="${!ov.clouds}">Off</button></span></div>
+    </div><div class="foot">${esc(T.project.number)} · Rev ${esc(T.project.rev)} · ${esc(T.project.issue)}</div>`;
+    sum.innerHTML = S;
+    const keepScroll = body.dataset.for === JSON.stringify(ref) ? body.scrollTop : 0;
+    body.innerHTML = B;
+    body.dataset.for = JSON.stringify(ref);
+    body.scrollTop = keepScroll;
+    sizeCard();
+  }
+  const ov = { zones: true, clouds: true };
+
+  // card interactions (one delegated handler for summary + body)
+  card.addEventListener('click', (e) => {
+    const t = e.target.closest('button');
+    if (!t || t.closest('.grab')) return;
+    if (t.dataset.cable) {
+      if (v.selected && v.selected.kind === 'device') st.back = v.selected.tag;
+      if (isPhone()) setExpanded(false);
+      v.select({ kind: 'cable', id: t.dataset.cable }, { zoom: true });
+      return;
+    }
+    if (t.dataset.dev) { st.back = null; if (isPhone() && t.classList.contains('end')) setExpanded(false); selectUnit(t.dataset.dev); return; }
+    if (t.dataset.hand) { setHand(t.dataset.hand); return; }
+    if (t.dataset.ov) { ov[t.dataset.ov] = t.dataset.on === '1'; v.setOverlay({ [t.dataset.ov]: ov[t.dataset.ov] }); renderCard(); return; }
+    switch (t.dataset.act) {
+      case 'frame': v.fitFocus(); break;
+      case 'clear': st.back = null; v.clear(); break;
+      case 'back': { const tag = st.back; st.back = null; selectUnit(tag); break; }
+      case 'show': setOne(t.dataset.cls, true); break;
+      case 'sheet': goSheet(t.dataset.sheet); break;
+    }
+  });
+  function selectUnit(tag) {
+    const s = sheetOf(v.sheet);
+    const onSheet = (s.devices || []).some((d) => d.tag === tag) || (s.marks || []).some((m) => m.tag === tag);
+    if (!onSheet && home(tag)) { v.select({ kind: 'device', tag }); goSheet(home(tag)).then(() => { v.select({ kind: 'device', tag }); ensureVisible(true); }); return; }
+    v.select({ kind: 'device', tag }, { zoom: true, zoomOpts: { maxK: 1.2 } });
+  }
+  function setHand(hand) {
+    st.hand = hand;
+    localStorage.setItem('vt1-hand', hand);
+    document.body.classList.toggle('hand-left', hand === 'left');
+    document.body.classList.toggle('hand-right', hand === 'right');
+    renderCard();
+  }
+
+  // desktop: hovering a list row previews it on the drawing
+  card.addEventListener('pointerover', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    const r = e.target.closest('[data-cable],[data-dev]');
+    if (r) v.peek(r.dataset.cable ? { kind: 'cable', id: r.dataset.cable } : { kind: 'device', tag: r.dataset.dev }); else v.unpeek();
+  });
+  card.addEventListener('pointerleave', () => v.unpeek());
+
+  // ---------------------------------------------------------------- engine events
+  let lastTapSel = false;
+  v.on('tap', (t) => { lastTapSel = true; if (t.hit && t.hit.kind !== 'device') { /* drilling from the canvas keeps no back stack */ } st.back = null; closePicker(); });
+  v.on('select', () => {
+    renderCard();
+    if (lastTapSel && v.selected) setTimeout(() => ensureVisible(), 30);
+    lastTapSel = false;
+  });
+  v.on('hidden', () => { paintDock(); renderCard(); });
+  v.on('sheet', () => { paintSheet(); paintDock(); renderCard(); });
+  v.on('gesture', (s) => { if (s === 'start') closePicker(); });
+
+  // keyboard (desktop)
+  document.addEventListener('keydown', (e) => {
+    if (e.target.closest && e.target.closest('input,textarea')) return;
+    if (e.key === 'Escape') { closePicker(); st.back = null; v.clear(); }
+    else if (e.key === '+' || e.key === '=') v.zoomBy(1.5);
+    else if (e.key === '-') v.zoomBy(1 / 1.5);
+    else if (e.key === '0') v.zoomToFit();
+    else if (e.key === '[' ) stepSheet(-1);
+    else if (e.key === ']') stepSheet(1);
+    else if (/^[1-7]$/.test(e.key)) v.toggleClass(CLS[+e.key - 1]);
+  });
+
+  let wasPhone = isPhone();
+  const onResize = () => {
+    if (isPhone() !== wasPhone) { wasPhone = isPhone(); st.expanded = !wasPhone; }
+    sizeCard();
+  };
+  addEventListener('resize', onResize);
+  new ResizeObserver(() => { if (!card.classList.contains('dragging')) sizeCard(); }).observe($('#summary'));
+
+  paintSheet(); paintDock(); renderCard();
+  setExpanded(st.expanded);
+  // the first fit ran before the card had a height; fit again into the clear area
+  requestAnimationFrame(() => { v.zoomToFit(0); document.documentElement.dataset.ready = '1'; });
+})();
+</script>
+</body>
+</html>

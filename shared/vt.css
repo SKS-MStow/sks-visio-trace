@@ -1,0 +1,81 @@
+/* SKS Visio Trace — brand tokens (SKS Technologies brand guidelines, Jun 2026) + viewer styles */
+:root {
+  --sks-navy: #1F335C;      /* primary */
+  --sks-purple: #7C77B9;    /* accent: highlight, one emphasis at a time */
+  --sks-light: #F0F7F7;     /* panels */
+  --sks-dusty: #566686;     /* secondary text */
+  --sks-slate: #34486C;
+  --sks-charcoal: #373D58;
+  --sks-onyx: #3E3E48;
+  --sks-grey: #808285;
+  --line: #dfe5ea;
+  --line-strong: #c6cfd8;
+  --bg: #e9eef1;
+  --surface: #ffffff;
+  --text: #1F335C;
+  --text-2: #566686;
+  --text-3: #808285;
+  --ok: #2f7d4f;
+  --warn: #a8741a;
+  --radius: 10px;
+  --font: 'Mulish', 'Muli', -apple-system, system-ui, sans-serif;
+  --font-head: 'Roboto', -apple-system, system-ui, sans-serif;
+  --shadow: 0 1px 2px rgba(31, 51, 92, .08), 0 6px 20px rgba(31, 51, 92, .10);
+  --shadow-lg: 0 10px 40px rgba(31, 51, 92, .18);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { font-family: var(--font); color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent; overscroll-behavior: none; overflow: hidden; }
+button { font: inherit; color: inherit; }
+h1, h2, h3 { font-family: var(--font-head); margin: 0; }
+.msi { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 22px; line-height: 1; letter-spacing: normal;
+  text-transform: none; display: inline-block; white-space: nowrap; direction: ltr; -webkit-font-smoothing: antialiased; flex-shrink: 0;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+/* ---------- viewer */
+.vt-root { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; background: var(--bg); }
+.vt-svg { display: block; width: 100%; height: 100%; }
+.vt-paper { fill: #fff; filter: drop-shadow(0 2px 10px rgba(31, 51, 92, .16)); }
+.ko-line { fill: none; stroke: #fff; stroke-width: 5.5; stroke-linejoin: round; stroke-linecap: round; }
+.ko-thick { stroke-width: 6; }
+.ko-box { fill: #fff; stroke: none; }
+.ko-thin { stroke-width: 3; }
+.ko-cloudline { stroke-width: 14; }
+.glow-room { fill: none; stroke: var(--sks-purple); stroke-width: 4; stroke-opacity: .8; stroke-dasharray: 14 8; pointer-events: none; }
+.ko-zone { fill: none; stroke: #fff; stroke-width: 5; }
+.ko-cloud { fill: none; stroke: #fff; stroke-width: 9; }
+.vt-veil { fill: #fff; opacity: 0; pointer-events: none; transition: opacity .18s ease; }
+.vt-focusing .vt-veil { opacity: .84; }
+.glow-line { fill: none; stroke: var(--sks-purple); stroke-width: 5.5; stroke-opacity: .55; stroke-linejoin: round; stroke-linecap: round; mix-blend-mode: multiply; pointer-events: none; }
+.glow-line.is-sel { stroke-width: 8; stroke-opacity: .7; }
+.glow-service { stroke: var(--sks-dusty); stroke-opacity: .4; }
+.glow-chip { fill: var(--sks-purple); fill-opacity: .22; stroke: var(--sks-purple); stroke-width: 1.2; mix-blend-mode: multiply; }
+.glow-dev { fill: none; stroke: var(--sks-purple); stroke-width: 2; stroke-opacity: .9; pointer-events: none; }
+.glow-dev.is-primary { stroke: var(--sks-navy); stroke-width: 3.5; }
+.glow-port { fill: var(--sks-purple); fill-opacity: .32; stroke: var(--sks-purple); stroke-width: 1.4; mix-blend-mode: multiply; pointer-events: none; }
+.peek-line { fill: none; stroke: var(--sks-purple); stroke-width: 7; stroke-opacity: .35; stroke-linecap: round; stroke-linejoin: round; mix-blend-mode: multiply; pointer-events: none; }
+.peek-dev { fill: var(--sks-purple); fill-opacity: .08; stroke: var(--sks-purple); stroke-width: 1.5; stroke-dasharray: 5 4; pointer-events: none; }
+/* while the drawing moves, drop the blend effects for frame rate */
+.vt-moving .glow-line, .vt-moving .glow-chip, .vt-moving .glow-port, .vt-moving .peek-line { mix-blend-mode: normal; }
+
+/* ---------- shared UI atoms */
+.brand-bar { display: flex; align-items: center; gap: 10px; }
+.brand-bar img.logo { height: 26px; width: auto; display: block; }
+.chip-id { display: inline-flex; align-items: center; gap: 3px; font: 700 12px/1 var(--font-head); letter-spacing: .02em; color: var(--sks-navy);
+  padding: 4px 7px 4px 5px; border-radius: 5px; background: #fff; border: 1.5px solid var(--sks-navy); white-space: nowrap; }
+.chip-id::before { content: '‹'; font-weight: 400; color: var(--sks-navy); }
+.chip-id::after { content: '›'; font-weight: 400; color: var(--sks-navy); }
+.cls-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--text-2); letter-spacing: .02em; }
+.cls-pill b { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 18px; padding: 0 4px; border-radius: 4px;
+  background: var(--sks-navy); color: #fff; font: 700 11px/1 var(--font-head); }
+.status-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 700; }
+.status-tbc { background: #fbf3e2; color: var(--warn); }
+.status-ok { background: #e6f2eb; color: var(--ok); }
+.back-link { display: inline-flex; align-items: center; justify-content: center; gap: 4px; color: var(--text-2); text-decoration: none; font-weight: 600; font-size: 13px; min-height: 44px; min-width: 44px; }
+.opt-mark { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--sks-purple); }
+.label-strip { font: 700 12px/1.35 'Arial', sans-serif; letter-spacing: .02em; color: #000; background: #fff; border: 1.5px dashed #000; border-radius: 4px; padding: 6px 9px; }

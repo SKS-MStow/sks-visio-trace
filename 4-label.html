@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Option 4 · Cable Label — SKS Visio Trace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@500;700;900&family=Mulish:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+<link rel="stylesheet" href="shared/vt.css">
+<style>
+  body { display: grid; grid-template-rows: auto 1fr; height: 100vh; height: 100dvh; }
+
+  /* ---------- header */
+  .top { display: flex; align-items: center; gap: 10px; padding: calc(4px + var(--safe-top)) calc(12px + var(--safe-right)) 4px calc(6px + var(--safe-left));
+    background: #fff; border-bottom: 1px solid var(--line); min-width: 0; z-index: 10; }
+  .top .logo { height: 26px; width: auto; display: block; }
+  .proj { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 1px; padding-left: 10px; border-left: 1px solid var(--line); }
+  .proj .opt-mark { line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .proj .pname { font: 700 13.5px/1.25 var(--font-head); color: var(--sks-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .proj .pname span { color: var(--text-2); font-weight: 500; }
+  .sheet-sel { position: relative; display: inline-flex; align-items: center; min-height: 44px; }
+  .sheet-sel select { appearance: none; -webkit-appearance: none; font: 700 13px var(--font-head); color: var(--sks-navy); background: var(--sks-light);
+    border: 1px solid var(--line); border-radius: 8px; height: 38px; padding: 0 30px 0 12px; cursor: pointer; }
+  .sheet-sel .msi { position: absolute; right: 6px; pointer-events: none; font-size: 20px; color: var(--text-2); }
+  .seg { display: inline-flex; background: var(--sks-light); border: 1px solid var(--line); border-radius: 9px; padding: 3px; gap: 2px; }
+  .seg button { border: 0; background: none; border-radius: 6px; height: 38px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px;
+    font-weight: 700; font-size: 13px; color: var(--text-2); cursor: pointer; }
+  .seg button .msi { font-size: 19px; }
+  .seg button[aria-pressed="true"] { background: #fff; color: var(--sks-navy); box-shadow: 0 1px 2px rgba(31,51,92,.12); }
+  .icon-btn { border: 0; background: none; width: 44px; height: 44px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
+    color: var(--sks-navy); cursor: pointer; flex-shrink: 0; }
+  .icon-btn:active { background: var(--sks-light); }
+  .icon-btn[aria-pressed="true"] { background: var(--sks-navy); color: #fff; }
+  .only-phone { display: none !important; }
+  .icon-btn[hidden], .icon-btn.only-phone[hidden] { display: none !important; }
+
+  /* ---------- main */
+  main { position: relative; display: grid; grid-template-columns: 384px 1fr; min-height: 0; }
+  #stage { position: relative; grid-column: 2; min-width: 0; min-height: 0; }
+  #v { position: absolute; inset: 0; }
+  #dock { grid-column: 1; grid-row: 1; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; overflow-y: auto;
+    padding-left: var(--safe-left); }
+  #dock > * { flex-shrink: 0; min-width: 0; }
+  #dock { overflow-x: hidden; }
+  #dock .sec-find { order: 1; } #dock .sec-matches { order: 2; } #dock .sec-card { order: 3; } #dock .sec-keys { order: 4; }
+
+  .sec { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .sec-h { display: flex; align-items: center; gap: 8px; font: 700 11px/1 var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); margin-bottom: 9px; }
+  .sec-h .msi { font-size: 16px; }
+  .sec-h .n { margin-left: auto; letter-spacing: 0; text-transform: none; font-weight: 600; }
+
+  /* find field */
+  .find { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; border: 1.5px solid var(--sks-navy); border-radius: 10px; background: #fff;
+    padding: 0 6px 0 12px; cursor: text; text-align: left; }
+  .find > .msi { color: var(--text-2); }
+  .find .lbl { font-weight: 700; font-size: 14px; color: var(--text-2); white-space: nowrap; }
+  .find .q { font: 700 20px/1 var(--font-head); color: var(--sks-navy); letter-spacing: .04em; display: inline-flex; align-items: center; min-width: 0; }
+  .find .q::before { content: '‹'; font-weight: 400; margin-right: 2px; }
+  .find .q::after { content: '›'; font-weight: 400; margin-left: 2px; }
+  .find .q .ph { color: #b9c2cc; }
+  .find .q .caret { display: inline-block; width: 2px; height: 20px; background: var(--sks-purple); margin-left: 1px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .find .sp { flex: 1; }
+  .find .kbd { font-size: 11.5px; color: var(--text-3); font-weight: 600; white-space: nowrap; }
+  .find .x { width: 40px; height: 40px; }
+  .find-hint { margin-top: 8px; font-size: 12.5px; color: var(--text-2); line-height: 1.4; }
+  .find-hint kbd { font: 700 11px var(--font-head); border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--sks-navy); background: #fff; }
+
+  /* matches / recents */
+  .mlist { display: flex; flex-direction: column; gap: 6px; }
+  .mrow { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; border: 1px solid var(--line); border-radius: 9px; background: #fff;
+    padding: 6px 10px; cursor: pointer; text-align: left; }
+  .mrow:hover { border-color: var(--line-strong); background: #fafcfc; }
+  .mrow.top { border-color: var(--sks-navy); box-shadow: inset 3px 0 0 var(--sks-purple); }
+  .mrow .chip-id { font-size: 13px; }
+  .mrow .mt { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .mrow .mt b { font-size: 13px; color: var(--sks-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mrow .mt small { font-size: 11.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mrow .go { color: var(--text-3); font-size: 20px; }
+  .empty-note { font-size: 13px; color: var(--text-2); line-height: 1.45; }
+  .svc-row { display: flex; align-items: center; gap: 8px; }
+
+  /* key pad */
+  .prefixes { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
+  .digits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .key { min-height: 46px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 9px; background: #fff; cursor: pointer;
+    font: 700 19px/1 var(--font-head); color: var(--sks-navy); display: flex; align-items: center; justify-content: center; gap: 4px; touch-action: manipulation; }
+  .key:active { background: var(--sks-light); transform: translateY(1px); }
+  .key.pre { font-size: 16px; background: var(--sks-light); flex-direction: column; gap: 2px; }
+  .key.pre small { font: 600 8.5px/1 var(--font); letter-spacing: 0 !important; max-width: 100%; overflow: hidden; text-overflow: clip; white-space: nowrap; letter-spacing: .04em; color: var(--text-2); text-transform: uppercase; }
+  .key.pre.on { background: var(--sks-navy); color: #fff; border-color: var(--sks-navy); }
+  .key.pre.on small { color: #d7dbea; }
+  .key.pre.none { color: var(--text-3); }
+  .key.fn .msi { font-size: 22px; }
+  .key.go { background: var(--sks-navy); color: #fff; border-color: var(--sks-navy); font-size: 15px; }
+  .key.go[disabled] { opacity: .4; cursor: default; }
+
+  /* ---------- cards */
+  .sec-card { padding: 12px 14px 14px; }
+  .sec-card:empty { display: none; }
+  .card-top { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+  .card-top .ttl { font: 700 11px/1 var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+  .card-top .sp { flex: 1; }
+  .card-top .icon-btn { width: 44px; height: 44px; margin: -4px -6px -4px 0; }
+  .cable-badge { font: 700 11px/1 var(--font-head); border: 1px solid var(--line-strong); border-radius: 4px; padding: 3px 5px; color: var(--sks-navy); letter-spacing: .03em; }
+
+  .swipe { touch-action: pan-y; cursor: grab; will-change: transform; }
+  .swipe.anim { transition: transform .18s ease, opacity .18s ease; }
+  .label-big { display: flex; align-items: stretch; gap: 0; border: 1.5px dashed #000; border-radius: 5px; background: #fff; overflow: hidden; }
+  .label-big .lid { font: 900 22px/1 'Arial', sans-serif; color: #000; display: flex; align-items: center; padding: 0 11px; border-right: 1.5px dashed #000; letter-spacing: .01em; }
+  .label-big .ltxt { font: 700 13px/1.35 'Arial', sans-serif; color: #000; padding: 7px 10px; letter-spacing: .02em; }
+  .label-big .ltxt span { white-space: nowrap; }
+  .ends { margin-top: 10px; display: grid; grid-template-columns: auto 1fr; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .end { display: contents; }
+  .end > * { padding: 8px 10px; border-top: 1px solid var(--line); }
+  .end:first-child > * { border-top: 0; }
+  .end .role { font: 700 10.5px/1 var(--font); letter-spacing: .08em; color: var(--text-2); background: var(--sks-light); display: flex; align-items: center; }
+  .end .who { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .end .who .l1 { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .end .who .tag { font: 700 14px/1.2 var(--font-head); color: var(--sks-navy); }
+  .end .who .mm { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .end .who .pt { font-size: 13px; font-weight: 700; color: var(--sks-onyx); }
+  .end .who .pt .conn { font-weight: 600; color: var(--text-2); }
+  .end .who .pt .conn::before { content: '·'; margin: 0 6px; color: var(--text-3); }
+
+  .cnav { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+  .cnav .icon-btn { border: 1px solid var(--line-strong); }
+  .cnav .icon-btn[disabled] { opacity: .35; }
+  .cnav .mid { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .units { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-2); font-weight: 600; flex-wrap: wrap; justify-content: center; }
+  .units button { border: 1px solid var(--line-strong); background: #fff; border-radius: 7px; min-height: 36px; padding: 0 10px; font: 700 12.5px var(--font-head);
+    color: var(--sks-navy); cursor: pointer; position: relative; }
+  .units button::after { content: ''; position: absolute; inset: -4px 0; } /* 44px tap height */
+  .units button[aria-pressed="true"] { background: var(--sks-navy); color: #fff; border-color: var(--sks-navy); }
+  .dots { display: flex; gap: 5px; align-items: center; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); }
+  .dots i.on { background: var(--sks-purple); width: 18px; border-radius: 4px; }
+  .count { font-size: 11.5px; color: var(--text-2); font-weight: 600; }
+
+  .compact .ends, .compact .units, .compact .stack, .compact .feeds, .compact .uhint { display: none !important; }
+  .compact .cnav { margin-top: 8px; }
+
+  /* unit stack */
+  .unit-h { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .unit-h b { font: 700 16px/1.15 var(--font-head); color: var(--sks-navy); }
+  .unit-h small { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .uhint { font-size: 12px; color: var(--text-2); margin: 4px 0 8px; }
+  .stack { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; margin: 0 -14px; padding-left: 14px; padding-right: 14px;
+    scroll-padding: 0 14px; overscroll-behavior-x: contain; }
+  .stack::-webkit-scrollbar { height: 0; }
+  .tile { scroll-snap-align: start; flex: 0 0 214px; min-height: 92px; border: 1px solid var(--line-strong); border-radius: 9px; background: #fff; padding: 9px 10px;
+    text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 6px; }
+  .tile:hover { border-color: var(--sks-navy); }
+  .tile .r1 { display: flex; align-items: center; gap: 6px; }
+  .tile .r1 .cable-badge { margin-left: auto; }
+  .tile .lab { font: 700 11px/1.3 'Arial', sans-serif; color: #000; border: 1px dashed #000; border-radius: 3px; padding: 4px 6px; }
+  .tile .pp { font-size: 12px; color: var(--text-2); font-weight: 600; }
+  .tile .pp b { color: var(--sks-navy); }
+  .feeds { margin-top: 8px; font-size: 12px; color: var(--text-2); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+  .feeds b { color: var(--sks-onyx); }
+
+  .idle-card { border: 1px dashed var(--line-strong); border-radius: 10px; padding: 14px; background: var(--sks-light); }
+  .idle-card .label-strip { display: inline-block; margin: 6px 0 10px; }
+  .idle-card p { margin: 0 0 6px; font-size: 13px; line-height: 1.45; color: var(--text-2); }
+  .idle-card p b { color: var(--sks-navy); }
+
+  /* ---------- print sheet view */
+  #sheetview { position: absolute; inset: 0; overflow-y: auto; background: var(--bg); display: none; padding: 20px 24px calc(28px + var(--safe-bottom)); }
+  .print-mode #sheetview { display: block; }
+  .print-mode #v { visibility: hidden; }
+  .ps-head { display: flex; align-items: center; gap: 12px; max-width: 1100px; margin: 0 auto 14px; flex-wrap: wrap; }
+  .ps-head h2 { font-size: 20px; color: var(--sks-navy); }
+  .ps-head .sub { font-size: 13px; color: var(--text-2); }
+  .ps-head .sp { flex: 1; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 9px; border: 1px solid var(--sks-navy);
+    background: var(--sks-navy); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .btn.ghost { background: #fff; color: var(--sks-navy); border-color: var(--line-strong); }
+  .ps-grp { max-width: 1100px; margin: 0 auto 18px; }
+  .ps-grp h3 { display: flex; align-items: center; gap: 8px; font: 700 13px/1 var(--font-head); letter-spacing: .06em; color: var(--sks-navy); margin-bottom: 8px; text-transform: uppercase; }
+  .ps-grp h3 .n { color: var(--text-2); font-weight: 500; letter-spacing: 0; }
+  .ps-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 8px; }
+  .ps-item { display: flex; flex-direction: column; gap: 7px; text-align: left; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+    cursor: pointer; min-height: 44px; }
+  .ps-item:hover { border-color: var(--sks-navy); }
+  .ps-item .label-strip { align-self: flex-start; max-width: 100%; }
+  .ps-item .meta { font-size: 12px; color: var(--text-2); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ps-item .meta b { color: var(--sks-onyx); }
+  .ps-svc { font-size: 12.5px; color: var(--text-2); }
+  .ps-svc .label-strip { border-style: dotted; color: var(--text-2); }
+
+  /* ---------- phone */
+  @media (max-width: 768px) {
+    .only-desk { display: none !important; }
+    .only-phone { display: inline-flex !important; }
+    .top { gap: 6px; padding-right: calc(4px + var(--safe-right)); }
+    .top .logo { height: 20px; }
+    .proj { padding-left: 8px; }
+    .proj .pname { font-size: 12.5px; }
+    .proj .opt-mark { font-size: 10px; letter-spacing: .04em; }
+    .opt-mark .only-phone { display: inline !important; }
+    .sheet-sel select { padding: 0 24px 0 8px; }
+    .sheet-sel select { height: 36px; }
+    .sheet-sel select { padding: 0 26px 0 9px; font-size: 12.5px; }
+    main { display: block; }
+    #stage { position: absolute; inset: 0; }
+    #dock { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; border-right: 0; border-top: 1px solid var(--line-strong);
+      box-shadow: 0 -6px 24px rgba(31,51,92,.12); border-radius: 14px 14px 0 0; max-height: 82%;
+      padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left); }
+    .print-mode #dock { display: none; }
+    #dock .sec-card { order: 1; } #dock .sec-matches { order: 2; } #dock .sec-find { order: 3; } #dock .sec-keys { order: 4; }
+    .sec { padding: 8px 12px; border-bottom: 0; }
+    .sec-card { border-bottom: 1px solid var(--line); padding: 4px 12px 10px; }
+    .find { min-height: 48px; }
+    .find .lbl { font-size: 13.5px; }
+    .find .kbd, .find-hint { display: none; }
+    /* collapsed: card + slim find bar only */
+    #dock:not(.open) .sec-matches, #dock:not(.open) .sec-keys { display: none; }
+    #dock.open .sec-card { display: none; }
+    #dock.open .sec-find { padding-top: 4px; padding-bottom: 6px; }
+    .sec-matches { padding-top: 10px; padding-bottom: 2px; }
+    .sec-matches .sec-h { margin-bottom: 6px; }
+    .mlist { flex-direction: row; overflow-x: auto; margin: 0 -12px; padding: 0 12px 2px; gap: 6px; scroll-padding: 0 12px; }
+    .mlist::-webkit-scrollbar { height: 0; }
+    .mrow { flex: 0 0 auto; width: auto; max-width: 250px; min-height: 50px; }
+    .mrow .go { display: none; }
+    .empty-note { font-size: 12.5px; min-height: 50px; display: flex; align-items: center; flex: 0 0 auto; max-width: 100%; }
+    .mlist { align-items: stretch; }
+    .mlist:has(.mrow) .empty-note { max-width: 140px; line-height: 1.3; }
+    .sec-keys { padding-top: 2px; padding-bottom: 10px; }
+    .prefixes { gap: 5px; margin-bottom: 6px; }
+    .digits { gap: 5px; }
+    .key { min-height: 48px; }
+    .card-top { min-height: 44px; }
+    .label-big .lid { font-size: 20px; padding: 0 9px; }
+    .label-big .ltxt { font-size: 12px; padding: 6px 8px; }
+    .end > * { padding: 6px 9px; }
+    .ends { margin-top: 8px; }
+    .cnav { margin-top: 8px; }
+    #sheetview { padding: 14px 12px calc(20px + var(--safe-bottom)); }
+    .ps-list { grid-template-columns: 1fr; }
+    .ps-head h2 { font-size: 17px; }
+    .ps-item .label-strip { font-size: 11.5px; }
+  }
+
+  @media print {
+    @page { margin: 12mm; }
+    body { display: block; height: auto; overflow: visible; background: #fff; }
+    .top, #dock, #v, .ps-head .btn { display: none !important; }
+    main, #stage { display: block; position: static; }
+    #sheetview { display: block !important; position: static; padding: 0; overflow: visible; background: #fff; }
+    .ps-item { border: 0; padding: 4px 0; break-inside: avoid; }
+    .ps-item .meta { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="back-link" href="./" aria-label="Back to options"><span class="msi">arrow_back</span></a>
+  <img class="logo" src="assets/sks-logo.svg" alt="SKS Technologies">
+  <div class="proj">
+    <span class="opt-mark"><span class="only-desk">Option 4 · </span><span class="only-phone">4 · </span>Cable Label</span>
+    <span class="pname" id="pname"></span>
+  </div>
+  <label class="sheet-sel" title="Drawing sheet"><select id="sheetSel" aria-label="Drawing sheet"></select><span class="msi">expand_more</span></label>
+  <div class="seg only-desk" role="group" aria-label="View">
+    <button id="vDraw" aria-pressed="true"><span class="msi">schema</span>Drawing</button>
+    <button id="vPrint" aria-pressed="false"><span class="msi">label</span>Print sheet</button>
+  </div>
+  <button class="icon-btn only-phone" id="vToggle" aria-pressed="false" aria-label="Print sheet view"><span class="msi">label</span></button>
+</header>
+
+<main id="main">
+  <div id="stage">
+    <div id="v"></div>
+    <div id="sheetview" aria-label="Cable label print sheet"></div>
+  </div>
+
+  <aside id="dock" aria-label="Cable label finder">
+    <section class="sec sec-find">
+      <button class="find" id="findBtn" aria-label="Find cable by label number">
+        <span class="msi">search</span>
+        <span class="lbl">Find cable</span>
+        <span class="q" id="qShow"></span>
+        <span class="sp"></span>
+        <span class="kbd only-desk">type to search</span>
+        <span class="icon-btn x" id="qX" role="button" aria-label="Clear" hidden><span class="msi">close</span></span>
+        <span class="icon-btn x only-phone" id="padClose" role="button" aria-label="Close label pad" hidden><span class="msi">expand_more</span></span>
+      </button>
+      <div class="find-hint">Read the number off the cable label. Type <kbd>V</kbd><kbd>2</kbd> or <kbd>V</kbd><kbd>0</kbd><kbd>0</kbd><kbd>2</kbd>, then <kbd>Enter</kbd>. <kbd>←</kbd> <kbd>→</kbd> step through a unit's cables.</div>
+    </section>
+    <section class="sec sec-matches">
+      <div class="sec-h" id="mHead"></div>
+      <div class="mlist" id="mList"></div>
+    </section>
+    <section class="sec sec-card" id="card"></section>
+    <section class="sec sec-keys">
+      <div class="prefixes" id="prefixes"></div>
+      <div class="digits" id="digits"></div>
+    </section>
+  </aside>
+</main>
+
+<script src="shared/vt.js"></script>
+<script>
+(async () => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const mq = matchMedia('(max-width: 768px)');
+  const isPhone = () => mq.matches;
+
+  const T = await VT.load('data/drawing.json');
+  window.T = T;
+  const dock = $('#dock'), stage = $('#stage');
+  const v = VT.create(T, $('#v'), {
+    sheet: 'AVS01',
+    insets: () => {
+      if (!isPhone() || document.body.classList.contains('print-mode')) return { top: 8, right: 8, bottom: 8, left: 8 };
+      return { top: 8, right: 8, bottom: Math.round(dock.getBoundingClientRect().height) + 8, left: 8 };
+    },
+  });
+  window.v = v;
+
+  const ORDER = ['video', 'audio', 'control', 'network', 'usb', 'spk', 'power'];
+  const SHORT = { V: 'Video', A: 'Audio', C: 'Ctrl', N: 'Net', U: 'USB', SK: 'Spkr', P: 'Power' };
+  const PREFIX = { V: 'video', A: 'audio', C: 'control', N: 'network', U: 'usb', SK: 'spk', P: 'power' };
+  const parseId = (id) => { const m = /^(SK|[A-Z])(\d+)$/.exec(id); return m ? { p: m[1], n: m[2] } : { p: '', n: '' }; };
+  const byLabel = (a, b) => (ORDER.indexOf(a.cls) - ORDER.indexOf(b.cls)) || a.id.localeCompare(b.id, 'en', { numeric: true });
+  const allCables = Object.values(T.cables).sort(byLabel);
+  const unitCables = (tag) => (tag ? T.cablesOf(tag).slice().sort(byLabel) : []);
+  const dev = (tag) => T.devices[tag];
+  const mm = (tag) => { const d = dev(tag); return d ? [d.make, d.model].filter(Boolean).join(' ') : ''; };
+  const conn = (e) => { const d = dev(e.dev); const p = d && d.portMap && d.portMap[e.port]; return p ? p.conn : ''; };
+  const portTxt = (e) => (e.port && e.port !== '-' ? e.port : '—');
+
+  $('#pname').innerHTML = `${esc(T.project.number)} <span>· ${esc(T.project.name)}</span>`;
+
+  // ---------------------------------------------------------------- state
+  const S = { prefix: '', digits: '', open: false, sel: null, unit: null, compact: false, pendingUnit: undefined, programmatic: false, view: 'drawing', slide: 0 };
+  const RKEY = 'vt4-recent';
+  let recent = [];
+  try { recent = JSON.parse(localStorage.getItem(RKEY) || '[]').filter((id) => T.cables[id]); } catch (e) { recent = []; }
+  if (!recent.length) recent = [];
+  function pushRecent(id) {
+    recent = [id, ...recent.filter((x) => x !== id)].slice(0, 5);
+    try { localStorage.setItem(RKEY, JSON.stringify(recent)); } catch (e) {}
+  }
+
+  // ---------------------------------------------------------------- matching
+  function matches() {
+    if (!S.prefix && !S.digits) return [];
+    const qd = S.digits.replace(/^0+/, '');
+    const want = S.digits ? parseInt(S.digits, 10) : null;
+    return allCables
+      .filter((c) => {
+        const { p, n } = parseId(c.id);
+        if (S.prefix && p !== S.prefix) return false;
+        if (!qd) return true;
+        return String(parseInt(n, 10)).startsWith(qd);
+      })
+      .map((c) => ({ c, exact: want != null && parseInt(parseId(c.id).n, 10) === want }))
+      .sort((a, b) => (b.exact - a.exact) || byLabel(a.c, b.c));
+  }
+
+  // ---------------------------------------------------------------- selection
+  async function selectCable(id, unit) {
+    const c = T.cables[id];
+    if (!c) return;
+    if (S.view !== 'drawing') setView('drawing');
+    S.pendingUnit = unit === undefined ? null : unit;
+    S.programmatic = true;
+    if (v.sheet !== c.sheet) await v.setSheet(c.sheet);
+    v.select({ kind: 'cable', id }, { zoom: true });
+    S.programmatic = false;
+  }
+  async function selectDevice(tag) {
+    if (S.view !== 'drawing') setView('drawing');
+    const d = dev(tag);
+    S.programmatic = true;
+    if (d && v.sheet !== d.sheet && !(T.sheets[v.sheet].marks || []).some((m) => m.tag === tag)) await v.setSheet(d.sheet);
+    v.select({ kind: 'device', tag }, { zoom: true });
+    S.programmatic = false;
+  }
+
+  v.on('select', (ref) => {
+    v.unpeek();
+    const fromCanvas = !S.programmatic;
+    if (!ref) { S.sel = null; S.unit = null; }
+    else if (ref.kind === 'device') { S.sel = { kind: 'device', tag: ref.tag }; S.unit = ref.tag; S.open = false; }
+    else {
+      const id = ref.kind === 'cable' ? ref.id : ref.cable;
+      const c = T.cables[id];
+      let u = S.pendingUnit != null ? S.pendingUnit : (ref.kind === 'port' ? ref.tag : null);
+      if (!u && S.unit && c.ends.some((e) => e.dev === S.unit)) u = S.unit;
+      if (!u || !dev(u)) u = (c.ends.find((e) => dev(e.dev)) || {}).dev || null;
+      S.sel = { kind: 'cable', id }; S.unit = u; S.open = false;
+      pushRecent(id);
+    }
+    S.pendingUnit = undefined;
+    renderAll();
+    if (fromCanvas && ref) requestAnimationFrame(() => v.fitFocus());
+  });
+
+  // after a canvas tap the card may have grown over the item: refit only if it is not fully visible
+  function ensureVisible() {
+    const f = v.focused; if (!f) return;
+    const b = v.focusBox(f); if (!b) return;
+    const r = stage.getBoundingClientRect(), ins = v.container ? null : null;
+    const bottom = isPhone() ? r.height - dock.getBoundingClientRect().height : r.height;
+    const [x1, y1] = v.worldToScreen(b[0], b[1]), [x2, y2] = v.worldToScreen(b[0] + b[2], b[1] + b[3]);
+    if (x1 < 0 || y1 < 0 || x2 > r.width || y2 > bottom) v.fitFocus();
+  }
+
+  function step(dir) {
+    if (!S.sel || S.sel.kind !== 'cable') return;
+    const list = unitCables(S.unit);
+    if (list.length < 2) return;
+    const i = list.findIndex((c) => c.id === S.sel.id);
+    const next = list[(i + dir + list.length) % list.length];
+    S.slide = dir;
+    selectCable(next.id, S.unit);
+  }
+
+  // ---------------------------------------------------------------- render
+  function renderFind() {
+    const q = S.prefix + S.digits;
+    $('#qShow').innerHTML = q ? `${esc(q)}<span class="caret"></span>` : `<span class="ph">_ _ _ _</span>`;
+    $('#qX').hidden = !q;
+    $('#padClose').hidden = !S.open;
+    dock.classList.toggle('open', S.open);
+    // live peek of the best match while typing
+    const m = matches();
+    if (m.length && T.cables[m[0].c.id].sheet === v.sheet) v.peek({ kind: 'cable', id: m[0].c.id }); else v.unpeek();
+  }
+
+  function mrow(c, top) {
+    const a = c.ends[0], b = c.ends[1];
+    return `<button class="mrow${top ? ' top' : ''}" data-cable="${c.id}">
+      <span class="chip-id">${esc(c.id)}</span>
+      <span class="mt"><b>${esc(a.dev)} → ${esc(b.dev)}</b><small>${esc(T.classes[c.cls].label)} · ${esc(c.badge)}</small></span>
+      <span class="msi go">chevron_right</span></button>`;
+  }
+
+  function renderMatches() {
+    const q = S.prefix + S.digits;
+    const head = $('#mHead'), list = $('#mList');
+    if (!q) {
+      head.innerHTML = `<span class="msi">history</span>Recent<span class="n">${recent.length ? 'last ' + recent.length : ''}</span>`;
+      list.innerHTML = recent.length ? recent.map((id) => mrow(T.cables[id], false)).join('')
+        : `<div class="empty-note">Cables you look up show here. Try ‹V002›.</div>`;
+      return;
+    }
+    const m = matches();
+    head.innerHTML = `<span class="msi">label</span>Matches<span class="n">${m.length} for ‹${esc(q)}›</span>`;
+    if (m.length) { list.innerHTML = m.map((x, i) => mrow(x.c, i === 0)).join(''); return; }
+    if (S.prefix === 'P') {
+      const svcs = T.sheets[v.sheet === 'AVS02' ? 'AVS02' : 'AVS01'].services || [];
+      list.innerHTML = `<div class="empty-note">No P labels. Power runs as service feeds:</div>` +
+        svcs.slice(0, 9).map((s) => `<button class="mrow" data-dev="${esc(s.dev)}"><span class="chip-id">${esc(s.dev)}</span><span class="mt"><b>${esc(s.text)}</b><small>${esc(s.port)}</small></span><span class="msi go">chevron_right</span></button>`).join('');
+      return;
+    }
+    list.innerHTML = `<div class="empty-note">No cable labelled ‹${esc(q)}› on this set.</div>`;
+  }
+
+  function renderKeys() {
+    const counts = {};
+    allCables.forEach((c) => { const p = parseId(c.id).p; counts[p] = (counts[p] || 0) + 1; });
+    $('#prefixes').innerHTML = Object.keys(PREFIX).map((p) =>
+      `<button class="key pre${S.prefix === p ? ' on' : ''}${counts[p] ? '' : ' none'}" data-pre="${p}" aria-pressed="${S.prefix === p}" aria-label="${T.classes[PREFIX[p]].label} prefix ${p}">${p}<small>${SHORT[p]}</small></button>`).join('');
+    const top = matches()[0];
+    $('#digits').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => `<button class="key" data-d="${d}">${d}</button>`).join('') +
+      `<button class="key fn" data-fn="bs" aria-label="Backspace"><span class="msi">backspace</span></button>` +
+      `<button class="key" data-d="0">0</button>` +
+      `<button class="key go" data-fn="go" ${top ? '' : 'disabled'} aria-label="Go to top match">${top ? esc(top.c.id) : 'Go'}<span class="msi">arrow_forward</span></button>`;
+  }
+
+  function endRow(role, e) {
+    const d = dev(e.dev);
+    return `<div class="end"><div class="role">${role}</div><div class="who">
+      <div class="l1"><span class="tag">${esc(e.dev)}</span><span class="mm">${d ? esc(mm(e.dev)) : 'free end · not drawn as a unit'}</span></div>
+      <div class="pt">${esc(portTxt(e))}${conn(e) ? `<span class="conn">${esc(conn(e))}</span>` : ''}</div></div></div>`;
+  }
+
+  function renderCard() {
+    const card = $('#card');
+    card.classList.toggle('compact', S.compact);
+    const cBtn = `<button class="icon-btn only-phone" data-fn="compact" aria-label="${S.compact ? 'Expand card' : 'Compact card'}"><span class="msi">${S.compact ? 'expand_less' : 'expand_more'}</span></button>`;
+    const xBtn = `<button class="icon-btn" data-fn="clear" aria-label="Clear selection"><span class="msi">close</span></button>`;
+    if (!S.sel) {
+      card.innerHTML = isPhone() ? '' : `<div class="idle-card">
+        <div class="sec-h" style="margin:0"><span class="msi">sell</span>Cable label</div>
+        <div class="label-strip">V002 VIDEO ORIG: RX-01 DEST: LCD-01</div>
+        <p>Type the number on the cable in your hand. <b>V2</b> finds <b>V002</b>.</p>
+        <p>Tap a wire for that cable, or a unit for all its cables. Then step through the unit's cables with <b>‹ ›</b>.</p></div>`;
+      return;
+    }
+    if (S.sel.kind === 'device') {
+      const tag = S.sel.tag, list = unitCables(tag), svcs = T.servicesOf(tag);
+      card.innerHTML = `<div class="card-top"><div class="unit-h"><b>${esc(tag)}</b><small>${esc(mm(tag) || (dev(tag) || {}).desc || '')}</small></div><span class="sp"></span>
+          <span class="count">${list.length} cable${list.length === 1 ? '' : 's'}</span>${cBtn}${xBtn}</div>
+        ${list.length ? `<div class="uhint">Tap a label to isolate that cable${list.length > 1 ? ', then swipe through the rest' : ''}.</div>` : `<div class="uhint">No scheduled cables on ${esc(tag)}.</div>`}
+        <div class="stack">${list.map((c) => {
+          const me = T.mine(c, tag), other = T.peer(c, tag);
+          return `<button class="tile" data-cable="${c.id}" data-unit="${esc(tag)}">
+            <span class="r1"><span class="chip-id">${esc(c.id)}</span><span class="cable-badge">${esc(c.badge)}</span></span>
+            <span class="lab">${esc(T.label(c))}</span>
+            <span class="pp"><b>${esc(portTxt(me))}</b> → ${esc(other.dev)} ${esc(portTxt(other))}</span></button>`;
+        }).join('')}</div>
+        ${svcs.length ? `<div class="feeds"><span>Service feeds:</span>${svcs.map((s) => `<span><b>${esc(s.port)}</b> ← ${esc(s.text)}</span>`).join('')}</div>` : ''}`;
+      return;
+    }
+    const c = T.cables[S.sel.id], list = unitCables(S.unit), i = list.findIndex((x) => x.id === c.id);
+    const units = [...new Set(c.ends.map((e) => e.dev))].filter((t) => dev(t));
+    const parts = T.label(c).match(/^(\S+) (\S+) (ORIG: .*?) (DEST: .*)$/);
+    card.innerHTML = `<div class="card-top"><span class="ttl">Cable label</span>
+        <span class="cls-pill"><b>${esc(T.classes[c.cls].prefix)}</b>${esc(T.classes[c.cls].label)}</span>
+        <span class="cable-badge">${esc(c.badge)}</span><span class="sp"></span>${cBtn}${xBtn}</div>
+      <div class="swipe" id="swipe">
+        <div class="label-big" aria-label="Cable label ${esc(T.label(c))}"><span class="lid">${esc(c.id)}</span>
+          <span class="ltxt">${parts ? `<span>${esc(parts[2])}</span> <span>${esc(parts[3])}</span> <span>${esc(parts[4])}</span>` : esc(T.label(c))}</span></div>
+        <div class="ends">${endRow('ORIG', c.ends[0])}${endRow('DEST', c.ends[1])}</div>
+      </div>
+      <div class="cnav">
+        <button class="icon-btn" data-fn="prev" aria-label="Previous cable on ${esc(S.unit)}" ${list.length > 1 ? '' : 'disabled'}><span class="msi">chevron_left</span></button>
+        <div class="mid">
+          ${units.length > 1 ? `<div class="units">Step through${units.map((t) => `<button data-unitpick="${esc(t)}" aria-pressed="${t === S.unit}">${esc(t)}</button>`).join('')}</div>` : ''}
+          <div class="dots" aria-hidden="true">${list.map((x) => `<i class="${x.id === c.id ? 'on' : ''}"></i>`).join('')}</div>
+          <span class="count">${i + 1} of ${list.length} on ${esc(S.unit)}</span>
+        </div>
+        <button class="icon-btn" data-fn="next" aria-label="Next cable on ${esc(S.unit)}" ${list.length > 1 ? '' : 'disabled'}><span class="msi">chevron_right</span></button>
+      </div>`;
+    if (S.slide) {
+      const sw = $('#swipe');
+      sw.style.transform = `translateX(${S.slide * 40}px)`; sw.style.opacity = '0';
+      requestAnimationFrame(() => { sw.classList.add('anim'); sw.style.transform = ''; sw.style.opacity = ''; });
+      S.slide = 0;
+    }
+    wireSwipe();
+  }
+
+  function renderSheetView() {
+    const sv = $('#sheetview');
+    const groups = ORDER.map((cls) => ({ cls, list: allCables.filter((c) => c.cls === cls) }));
+    sv.innerHTML = `<div class="ps-head"><div><h2>Cable label schedule</h2><div class="sub">${esc(T.project.number)} · ${esc(T.project.name)} · ${allCables.length} labels · tap a label to find it on the drawing</div></div>
+        <span class="sp"></span><button class="btn ghost" data-fn="todrawing"><span class="msi">schema</span>Drawing</button><button class="btn" data-fn="print"><span class="msi">print</span>Print labels</button></div>` +
+      groups.map((g) => {
+        const C = T.classes[g.cls];
+        if (g.cls === 'power') {
+          const svcs = T.sheetList.flatMap((s) => s.services || []);
+          return `<div class="ps-grp"><h3><span class="cls-pill"><b>${C.prefix}</b></span>${esc(C.name)} &amp; SERVICES <span class="n">${svcs.length} feeds, no labels</span></h3><div class="ps-list">${svcs.map((s) =>
+            `<button class="ps-item ps-svc" data-dev="${esc(s.dev)}"><span class="label-strip">${esc(s.text)} → ${esc(s.dev)} ${esc(s.port)}</span><span class="meta">Service feed by others · ${esc(s.sheet)}</span></button>`).join('')}</div></div>`;
+        }
+        if (!g.list.length) return '';
+        return `<div class="ps-grp"><h3><span class="cls-pill"><b>${C.prefix}</b></span>${esc(C.name)} <span class="n">${g.list.length}</span></h3><div class="ps-list">${g.list.map((c) =>
+          `<button class="ps-item" data-cable="${c.id}"><span class="label-strip">${esc(T.label(c))}</span>
+            <span class="meta"><span class="cable-badge">${esc(c.badge)}</span><span><b>${esc(portTxt(c.ends[0]))}</b>${conn(c.ends[0]) ? ' (' + esc(conn(c.ends[0])) + ')' : ''} → <b>${esc(portTxt(c.ends[1]))}</b>${conn(c.ends[1]) ? ' (' + esc(conn(c.ends[1])) + ')' : ''}</span></span></button>`).join('')}</div></div>`;
+      }).join('');
+  }
+
+  function renderAll() { renderFind(); renderMatches(); renderKeys(); renderCard(); }
+
+  // ---------------------------------------------------------------- query input
+  function pressPrefix(p) { S.prefix = S.prefix === p && !S.digits ? '' : p; S.digits = ''; afterType(); }
+  function pressDigit(d) { if (S.digits.length >= 4) return; S.digits += d; afterType(); }
+  function backspace() { if (S.digits) S.digits = S.digits.slice(0, -1); else S.prefix = ''; afterType(); }
+  function clearQ() { S.prefix = ''; S.digits = ''; afterType(); }
+  function go() { const m = matches(); if (m.length) { const id = m[0].c.id; S.prefix = ''; S.digits = ''; selectCable(id, null); } }
+  function afterType() {
+    // a full label number (V002, SK01) jumps straight to the cable
+    const m = matches();
+    if (S.prefix && S.digits && m.length && m[0].exact && S.digits.length >= parseId(m[0].c.id).n.length && m.filter((x) => x.exact).length === 1) { go(); return; }
+    renderFind(); renderMatches(); renderKeys();
+  }
+
+  function setOpen(o) {
+    S.open = o;
+    renderFind();
+    if (!o) v.unpeek();
+    if (o && S.sel) requestAnimationFrame(ensureVisible);
+    else if (o && isPhone()) requestAnimationFrame(() => v.zoomToFit(260));
+    else if (!o && !S.sel && isPhone()) requestAnimationFrame(() => v.zoomToFit(260));
+  }
+
+  // ---------------------------------------------------------------- events
+  dock.addEventListener('click', (e) => {
+    const t = e.target.closest('button, [role="button"]');
+    if (!t) return;
+    if (t.id === 'qX') { e.stopPropagation(); clearQ(); return; }
+    if (t.id === 'padClose') { e.stopPropagation(); setOpen(false); return; }
+    if (t.id === 'findBtn') { if (isPhone() && !S.open) setOpen(true); return; }
+    if (t.dataset.pre) return pressPrefix(t.dataset.pre);
+    if (t.dataset.d != null) return pressDigit(t.dataset.d);
+    if (t.dataset.cable) { S.prefix = ''; S.digits = ''; return selectCable(t.dataset.cable, t.dataset.unit || null); }
+    if (t.dataset.dev) { S.prefix = ''; S.digits = ''; return selectDevice(t.dataset.dev); }
+    if (t.dataset.unitpick) { S.unit = t.dataset.unitpick; renderCard(); return; }
+    const fn = t.dataset.fn;
+    if (fn === 'bs') backspace();
+    else if (fn === 'go') go();
+    else if (fn === 'prev') step(-1);
+    else if (fn === 'next') step(1);
+    else if (fn === 'clear') v.clear();
+    else if (fn === 'compact') { S.compact = !S.compact; renderCard(); }
+  });
+
+  function wireSwipe() {
+    const sw = $('#swipe');
+    if (!sw) return;
+    let st = null;
+    sw.addEventListener('pointerdown', (e) => { if (e.button) return; st = { x: e.clientX, y: e.clientY, id: e.pointerId, h: null }; sw.classList.remove('anim'); });
+    sw.addEventListener('pointermove', (e) => {
+      if (!st || e.pointerId !== st.id) return;
+      const dx = e.clientX - st.x, dy = e.clientY - st.y;
+      if (st.h == null && Math.abs(dx) + Math.abs(dy) > 8) { st.h = Math.abs(dx) > Math.abs(dy); if (st.h) sw.setPointerCapture(e.pointerId); }
+      if (st.h) sw.style.transform = `translateX(${dx}px)`;
+    });
+    const up = (e) => {
+      if (!st || e.pointerId !== st.id) return;
+      const dx = e.clientX - st.x, horiz = st.h; st = null;
+      sw.classList.add('anim');
+      if (horiz && Math.abs(dx) > 56 && unitCables(S.unit).length > 1) {
+        sw.style.transform = `translateX(${dx < 0 ? -120 : 120}px)`; sw.style.opacity = '0';
+        setTimeout(() => step(dx < 0 ? 1 : -1), 120);
+      } else sw.style.transform = '';
+    };
+    sw.addEventListener('pointerup', up);
+    sw.addEventListener('pointercancel', up);
+  }
+
+  $('#sheetview').addEventListener('click', (e) => {
+    const t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.cable) selectCable(t.dataset.cable, null);
+    else if (t.dataset.dev) selectDevice(t.dataset.dev);
+    else if (t.dataset.fn === 'print') window.print();
+    else if (t.dataset.fn === 'todrawing') setView('drawing');
+  });
+
+  function setView(view) {
+    S.view = view;
+    document.body.classList.toggle('print-mode', view === 'print');
+    $('#vDraw').setAttribute('aria-pressed', view === 'drawing');
+    $('#vPrint').setAttribute('aria-pressed', view === 'print');
+    $('#vToggle').setAttribute('aria-pressed', view === 'print');
+    $('#vToggle').innerHTML = `<span class="msi">${view === 'print' ? 'schema' : 'label'}</span>`;
+    $('#vToggle').setAttribute('aria-label', view === 'print' ? 'Back to drawing' : 'Print sheet view');
+    if (view === 'print') { renderSheetView(); $('#sheetview').scrollTop = 0; }
+  }
+  $('#vDraw').onclick = () => setView('drawing');
+  $('#vPrint').onclick = () => setView('print');
+  $('#vToggle').onclick = () => setView(S.view === 'print' ? 'drawing' : 'print');
+
+  const sel = $('#sheetSel');
+  sel.innerHTML = T.sheetList.map((s) => `<option value="${s.id}">${esc(s.id)}${s.cables && s.cables.length ? '' : s.kind === 'elevation' ? ' · elev.' : ''}</option>`).join('');
+  sel.onchange = () => { if (S.view !== 'drawing') setView('drawing'); v.setSheet(sel.value); };
+  v.on('sheet', (id) => { sel.value = id; sel.title = T.sheets[id].title; });
+
+  // desktop (and hardware keyboards): type V002 + Enter
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.closest && e.target.closest('select, input, textarea')) return;
+    const k = e.key;
+    if (/^[0-9]$/.test(k)) { pressDigit(k); e.preventDefault(); }
+    else if (/^[vacnup]$/i.test(k)) { pressPrefix(k.toUpperCase()); e.preventDefault(); }
+    else if (/^s$/i.test(k)) { pressPrefix('SK'); e.preventDefault(); }
+    else if (/^k$/i.test(k)) { if (S.prefix !== 'SK') pressPrefix('SK'); e.preventDefault(); }
+    else if (k === 'Backspace') { backspace(); e.preventDefault(); }
+    else if (k === 'Enter') { if (S.prefix || S.digits) { go(); e.preventDefault(); } }
+    else if (k === 'Escape') { if (S.prefix || S.digits) clearQ(); else if (S.open) setOpen(false); else v.clear(); }
+    else if (k === 'ArrowRight') { step(1); }
+    else if (k === 'ArrowLeft') { step(-1); }
+  });
+
+  mq.addEventListener('change', () => { renderCard(); });
+
+  await v.ready;
+  sel.value = v.sheet;
+  renderAll();
+  document.title = 'Option 4 · Cable Label — ' + T.project.number;
+  window.__ready = true;
+})();
+</script>
+</body>
+</html>

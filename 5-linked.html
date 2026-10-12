@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Option 5 · Wall &amp; Wire — SKS Visio Trace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@500;700;900&family=Mulish:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+<link rel="stylesheet" href="shared/vt.css">
+<style>
+  html, body { height: 100%; }
+  [hidden] { display: none !important; }
+  .opt-mark { white-space: nowrap; }
+  body { display: flex; flex-direction: column; height: 100dvh; }
+
+  /* ---------- top bar */
+  .top { flex: none; display: flex; align-items: center; gap: 12px; padding: calc(6px + var(--safe-top)) calc(14px + var(--safe-right)) 6px calc(8px + var(--safe-left));
+    background: #fff; border-bottom: 1px solid var(--line); min-height: 56px; position: relative; z-index: 20; }
+  .top .logo { height: 26px; width: auto; display: block; }
+  .top .vr { width: 1px; align-self: stretch; background: var(--line); margin: 6px 2px; }
+  .proj { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .proj .num { font: 700 14px/1.2 var(--font-head); color: var(--sks-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .proj .num span { font-weight: 500; color: var(--text-2); }
+  .spacer { flex: 1; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; min-width: 44px; padding: 0 12px; border-radius: 8px;
+    border: 1px solid var(--line-strong); background: #fff; color: var(--sks-navy); font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .btn:hover { background: var(--sks-light); }
+  .btn[aria-pressed="true"] { background: var(--sks-navy); color: #fff; border-color: var(--sks-navy); }
+  .btn.icon { padding: 0; width: 44px; }
+  .btn.ghost { border-color: transparent; background: transparent; }
+  .btn.ghost:hover { background: var(--sks-light); }
+  .btn:focus-visible, .seg button:focus-visible { outline: 2px solid var(--sks-purple); outline-offset: 2px; }
+
+  /* sheet pair menu */
+  .menu-wrap { position: relative; }
+  .sheet-btn .code { font: 700 13px/1 var(--font-head); }
+  .menu { position: absolute; top: calc(100% + 6px); right: 0; width: 300px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-lg);
+    padding: 6px; display: none; z-index: 40; }
+  .menu.open { display: block; }
+  .menu h4 { margin: 6px 10px 4px; font: 700 11px/1 var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+  .menu button { display: flex; width: 100%; align-items: center; gap: 10px; text-align: left; border: 0; background: none; padding: 10px; min-height: 52px; border-radius: 8px; cursor: pointer; }
+  .menu button:hover, .menu button[aria-checked="true"] { background: var(--sks-light); }
+  .menu .pair { font: 700 13px/1.2 var(--font-head); color: var(--sks-navy); }
+  .menu .sub { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .menu .msi.tick { margin-left: auto; color: var(--sks-purple); visibility: hidden; }
+  .menu button[aria-checked="true"] .tick { visibility: visible; }
+
+  /* layer preset segmented control */
+  .seg { display: inline-flex; background: var(--sks-light); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px; }
+  .seg button { border: 0; background: transparent; min-height: 38px; padding: 0 12px; border-radius: 7px; font-weight: 700; font-size: 13px; color: var(--text-2); cursor: pointer; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px; }
+  .seg button b { font: 700 10.5px/1 var(--font-head); color: var(--text-3); letter-spacing: .02em; }
+  .seg button[aria-checked="true"] { background: var(--sks-navy); color: #fff; }
+  .seg button[aria-checked="true"] b { color: #c9cde6; }
+
+  /* ---------- stage */
+  #stage { flex: 1; position: relative; min-height: 0; background: var(--bg); }
+  .pane { position: absolute; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; }
+  .pane.hidden { display: none; }
+  .pane-hd { flex: none; height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 4px 0 12px; background: #fff; border-bottom: 1px solid var(--line); min-width: 0; }
+  .pane-hd .code { font: 700 13px/1 var(--font-head); color: var(--sks-navy); white-space: nowrap; }
+  .pane-hd .kind { font-size: 12px; color: var(--text-2); font-weight: 600; white-space: nowrap; }
+  .pane-hd .note { font-size: 12px; font-weight: 700; color: var(--sks-purple); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .pane-hd .note:empty { display: none; }
+  .pane-hd .grow { flex: 1; min-width: 0; }
+  .pane-hd .btn { min-height: 40px; min-width: 40px; width: 40px; }
+  .vbox { flex: 1; min-height: 0; position: relative; }
+  .pip-hit { position: absolute; inset: 44px 0 0 0; display: none; cursor: pointer; touch-action: none; }
+
+  /* PiP card (phone) */
+  .pane.pip { border-radius: 12px; box-shadow: var(--shadow-lg); border: 1.5px solid var(--sks-navy); z-index: 10; transition: left .22s ease, top .22s ease; }
+  .pane.pip.dragging { transition: none; }
+  .pane.pip .pip-hit { display: block; }
+  .pane.pip .pane-hd { padding-left: 10px; cursor: grab; touch-action: none; }
+  .pane.pip .pane-hd .kind { display: none; }
+  .pane.pip .vt-root { pointer-events: none; }
+
+  /* divider */
+  #divider { position: absolute; z-index: 5; background: var(--line); display: flex; align-items: center; justify-content: center; touch-action: none; }
+  #divider.v { cursor: col-resize; }
+  #divider.h { cursor: row-resize; }
+  #divider::after { content: ''; background: var(--sks-dusty); border-radius: 3px; }
+  #divider.v::after { width: 4px; height: 40px; }
+  #divider.h::after { width: 40px; height: 4px; }
+  #divider:hover, #divider.dragging { background: var(--line-strong); }
+  #divider.hidden { display: none; }
+
+  /* plates overlay on the elevation */
+  .plate-hl rect.pl { fill: #fff; stroke: var(--sks-purple); stroke-width: 2.4; }
+  .plate-hl rect.pl.sel { stroke: var(--sks-navy); stroke-width: 3.2; }
+  .plate-hl text { font: 700 8.6px var(--font-head); fill: var(--sks-navy); text-anchor: middle; dominant-baseline: central; letter-spacing: .02em; }
+  .plate-hl .halo { fill: var(--sks-purple); fill-opacity: .14; stroke: none; }
+
+  /* ---------- info strip */
+  #dock { flex: none; background: #fff; border-top: 1px solid var(--line); position: relative; z-index: 15;
+    padding: 10px calc(16px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(16px + var(--safe-left)); }
+  .strip { display: flex; align-items: center; gap: 16px; min-height: 64px; }
+  .strip .who { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 0 1 auto; }
+  .tagbox { font: 900 15px/1 var(--font-head); color: #fff; background: var(--sks-navy); padding: 8px 10px; border-radius: 6px; white-space: nowrap; letter-spacing: .02em; }
+  .who .mm { min-width: 0; }
+  .who .mm .t1 { font: 700 14px/1.25 var(--font-head); color: var(--sks-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .who .mm .t2 { font-size: 12.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .count { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: none; padding: 0 12px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); min-height: 44px; }
+  .count b { font: 900 20px/1 var(--font-head); color: var(--sks-navy); }
+  .count span { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); margin-top: 3px; }
+  .feeds { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; align-items: center; }
+  .feeds .lab { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); margin-right: 2px; }
+  .svc { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 0 10px 0 7px; border-radius: 99px; border: 1px solid var(--line-strong); background: var(--sks-light);
+    font-size: 12px; font-weight: 800; color: var(--sks-navy); cursor: pointer; white-space: nowrap; position: relative; }
+  .svc::after { content: ''; position: absolute; inset: -6px -2px; } /* 44px tap target */
+  .svc .msi { font-size: 17px; color: var(--sks-dusty); }
+  .svc small { font-weight: 600; color: var(--text-2); }
+  .svc.on { border-color: var(--sks-purple); background: #fff; box-shadow: inset 0 0 0 1px var(--sks-purple); }
+  .conns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .conn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 0 8px 0 5px; min-height: 36px; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text-2); position: relative; }
+  .conn::after { content: ''; position: absolute; inset: -4px 0; }
+  .conn:hover { background: var(--sks-light); }
+  .conn .chip-id { padding: 3px 5px 3px 4px; font-size: 11.5px; }
+  .conn .to { color: var(--sks-navy); }
+  .views { margin-left: auto; display: flex; gap: 6px; flex: none; }
+  .hint { color: var(--text-2); font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .hint .msi { color: var(--sks-purple); }
+  .ends { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .endbtn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: #fff; cursor: pointer; text-align: left; }
+  .endbtn b { font: 700 13px/1.1 var(--font-head); color: var(--sks-navy); }
+  .endbtn span { font-size: 11.5px; color: var(--text-2); font-weight: 700; }
+  .endbtn:hover { background: var(--sks-light); }
+  .arrow { color: var(--text-3); }
+  .label-strip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 380px; }
+  .dock-seg { display: none; }
+  .more-btn, .wall-tab, .fit-btn { display: none; }
+  .extra { display: flex; order: 10; flex: 1 1 100%; gap: 8px; align-items: center; min-width: 0; }
+  .strip { flex-wrap: wrap; row-gap: 8px; }
+  .strip .who { min-width: 280px; }
+  .phone-only { display: none; }
+  @media (max-width: 768px) { .desk-only { display: none; } }
+
+  /* ---------- phone */
+  @media (max-width: 768px) {
+    .top { gap: 6px; padding-right: calc(6px + var(--safe-right)); }
+    .top .logo, .top .vr, .top .desk-seg { display: none; }
+    .proj .num { font-size: 13px; }
+    .sheet-btn { padding: 0 8px; }
+    .sheet-btn .lbl { display: none; }
+    .menu { width: min(300px, calc(100vw - 16px)); }
+    .phone-only { display: inline-flex; }
+
+    #dock { padding: 8px calc(10px + var(--safe-right)) calc(8px + var(--safe-bottom)) calc(10px + var(--safe-left)); }
+    .strip { flex-wrap: wrap; gap: 8px 10px; min-height: 44px; }
+    .strip .who { flex: 1 1 0; gap: 9px; min-width: 0; }
+    .tagbox { font-size: 14px; padding: 7px 8px; }
+    .who .mm .t1 { font-size: 13px; }
+    .who .mm .t2 { font-size: 12px; }
+    .count { padding: 0 10px; border-right: 0; }
+    .count b { font-size: 18px; }
+    .views { display: none; }
+    .more-btn { display: inline-flex; }
+    .fit-btn, .wall-tab { display: inline-flex; }
+    .feeds { order: 5; flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 6px 0; margin: -6px 0; }
+    .feeds::-webkit-scrollbar { display: none; }
+    .extra { display: none; }
+    #dock.expanded .extra { display: flex; order: 6; flex: 1 1 100%; flex-direction: column; gap: 8px; max-height: 32vh; overflow: auto; }
+    .label-strip { max-width: 100%; white-space: normal; }
+    .ends { flex: 1 1 100%; order: 4; }
+    .endbtn { flex: 1 1 0; min-width: 0; }
+    .endbtn b, .endbtn span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hint { flex: 1 1 0; font-size: 13px; }
+    .dock-seg { display: flex; margin-top: 8px; }
+    .dock-seg .seg { display: flex; width: 100%; }
+    .dock-seg .seg button { flex: 1 1 0; justify-content: center; min-height: 44px; padding: 0 4px; font-size: 12.5px; }
+    .dock-seg .seg button b { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="back-link" href="./" aria-label="Back to options"><span class="msi">arrow_back</span></a>
+  <img class="logo" src="assets/sks-logo.svg" alt="SKS Technologies">
+  <div class="vr"></div>
+  <div class="proj">
+    <span class="opt-mark">Option 5 · Wall &amp; Wire</span>
+    <span class="num" id="projNum">…</span>
+  </div>
+  <div class="spacer"></div>
+  <div class="seg desk-seg" role="radiogroup" aria-label="Layer preset" data-seg></div>
+  <div class="menu-wrap">
+    <button class="btn sheet-btn" id="sheetBtn" aria-haspopup="true" aria-expanded="false">
+      <span class="msi">layers</span><span class="code" id="sheetCode">AVS01 + AVE01</span><span class="lbl" id="sheetLbl"></span><span class="msi">expand_more</span>
+    </button>
+    <div class="menu" id="sheetMenu" role="menu"></div>
+  </div>
+</header>
+
+<main id="stage">
+  <section class="pane" id="paneS" data-key="S">
+    <div class="pane-hd">
+      <span class="code" data-code>AVS01</span><span class="kind">Schematic</span>
+      <span class="note grow" data-note></span>
+      <button class="btn ghost icon" data-act="zoomout" aria-label="Zoom out"><span class="msi">remove</span></button>
+      <button class="btn ghost icon" data-act="zoomin" aria-label="Zoom in"><span class="msi">add</span></button>
+      <button class="btn ghost icon" data-act="fit" aria-label="Fit sheet"><span class="msi">fit_screen</span></button>
+      <button class="btn ghost icon" data-act="swap" aria-label="Swap views"><span class="msi">swap_vert</span></button>
+      <button class="btn ghost icon" data-act="expand" aria-label="Split 50/50"><span class="msi">splitscreen</span></button>
+      <button class="btn ghost icon" data-act="pip" aria-label="Back to picture-in-picture"><span class="msi">picture_in_picture</span></button>
+      <button class="btn ghost icon" data-act="min" aria-label="Minimise to tab"><span class="msi">close_fullscreen</span></button>
+    </div>
+    <div class="vbox" id="vS"></div>
+    <div class="pip-hit" aria-label="Swap views" role="button"></div>
+  </section>
+  <div id="divider" role="separator" aria-label="Resize panes"></div>
+  <section class="pane" id="paneE" data-key="E">
+    <div class="pane-hd">
+      <span class="code" data-code>AVE01</span><span class="kind">Elevation</span>
+      <span class="note grow" data-note></span>
+      <button class="btn ghost icon" data-act="zoomout" aria-label="Zoom out"><span class="msi">remove</span></button>
+      <button class="btn ghost icon" data-act="zoomin" aria-label="Zoom in"><span class="msi">add</span></button>
+      <button class="btn ghost icon" data-act="fit" aria-label="Fit wall"><span class="msi">fit_screen</span></button>
+      <button class="btn ghost icon" data-act="swap" aria-label="Swap views"><span class="msi">swap_vert</span></button>
+      <button class="btn ghost icon" data-act="expand" aria-label="Split 50/50"><span class="msi">splitscreen</span></button>
+      <button class="btn ghost icon" data-act="pip" aria-label="Back to picture-in-picture"><span class="msi">picture_in_picture</span></button>
+      <button class="btn ghost icon" data-act="min" aria-label="Minimise to tab"><span class="msi">close_fullscreen</span></button>
+    </div>
+    <div class="vbox" id="vE"></div>
+    <div class="pip-hit" aria-label="Swap views" role="button"></div>
+  </section>
+</main>
+
+<footer id="dock">
+  <div class="strip" id="strip"></div>
+  <div class="dock-seg"><div class="seg" role="radiogroup" aria-label="Layer preset" data-seg></div></div>
+</footer>
+
+<script src="shared/vt.js"></script>
+<script>
+(async () => {
+  // ------------------------------------------------------------------ data
+  const T = await VT.load('data/drawing.json');
+  window.T = T;
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  $('#projNum').innerHTML = `${esc(T.project.number)} <span>· ${esc(T.project.name)}</span>`;
+
+  const PAIRS = [
+    { s: 'AVS01', e: 'AVE01', name: '2B · 20P Boardroom', sub: 'Schematic + wall and table elevation' },
+    { s: 'AVS02', e: 'AVE02', name: '6M · 6P Meeting Room', sub: 'Survey hold · relocation, models TBC' },
+  ];
+  // Outlet plates on the AVE01 elevation (PDF points, from the issued elevation). What each one serves
+  // comes from the service schedule; AV/DATA pathways follow the cable that leaves the table.
+  const PLATES = {
+    AVE01: [
+      { id: 'DGPO-1', label: 'DGPO', box: [593.1, 787.3, 32.6, 20.7], where: 'Display wall', svc: 'GPO BEHIND DISPLAY', cls: 'power' },
+      { id: 'DGPO-2', label: 'DGPO', box: [635.7, 787.3, 32.6, 20.7], where: 'Display wall', svc: 'GPO BEHIND DISPLAY', cls: 'power' },
+      { id: 'DGPO-3', label: 'DGPO', box: [678.2, 787.3, 32.6, 20.7], where: 'Display wall', svc: 'GPO BEHIND DISPLAY', cls: 'power' },
+      { id: 'DGPO-4', label: 'DGPO', box: [720.7, 787.3, 32.6, 20.7], where: 'Display wall', svc: 'GPO BEHIND DISPLAY', cls: 'power' },
+      { id: 'AV-W', label: 'AV', box: [763.2, 787.3, 32.6, 20.7], where: 'Display wall', cables: ['V001'], cls: 'video' },
+      { id: 'DATA-2', label: 'DATA 2', box: [805.8, 787.3, 32.6, 20.7], where: 'Display wall', devs: ['SW-01'], cls: 'network' },
+      { id: 'MATV', label: 'MATV', box: [848.3, 787.3, 32.6, 20.7], where: 'Display wall', svc: 'MATV OUTLET', cls: 'power' },
+      { id: 'GPO-T', label: 'GPO', box: [2115.3, 985.7, 32.6, 20.7], where: 'Table', svc: 'TABLE GPO - 100W PSU', cls: 'power' },
+      { id: 'AV-T', label: 'AV', box: [2157.9, 985.7, 32.6, 20.7], where: 'Table', cables: ['V001'], cls: 'video' },
+      { id: 'DATA-1', label: 'DATA 1', box: [2200.4, 985.7, 32.6, 20.7], where: 'Table', cables: ['N001'], cls: 'network' },
+    ],
+  };
+  const DISPLAY_BOX = [426.6, 498.6, 620.8, 355.8]; // the 98" display outline on AVE01
+  const HOME = { AVE01: [120, 330, 2160, 760] };   // wall + table, without the notes block
+  const HOME_WALL = { AVE01: [330, 420, 800, 540] };
+  const NOT_ON_WALL = { 'MIC-01': 'In the ceiling, not on this elevation', 'SPK-01': 'In the ceiling, not on this elevation', 'KBM-01': 'Wireless at the table, not drawn' };
+
+  const PRESETS = [
+    { id: 'all', label: 'All', short: 'All', show: null },
+    { id: 'av', label: 'AV signal', short: 'AV', show: ['video', 'audio', 'usb', 'spk'], codes: 'V A U SK' },
+    { id: 'network', label: 'Network', short: 'Network', show: ['network'], codes: 'N' },
+    { id: 'control', label: 'Control', short: 'Control', show: ['control'], codes: 'C' },
+    { id: 'power', label: 'Power', short: 'Power', show: ['power'], codes: 'P' },
+  ];
+  const ALL_CLASSES = Object.keys(T.classes);
+
+  // tag collisions across sheets (AVS01 and AVS02 both have LCD-01), so always look up per sheet
+  const devOn = (sheet, tag) => (T.sheets[sheet].devices || []).find((d) => d.tag === tag);
+  const markOn = (sheet, tag) => (T.sheets[sheet].marks || []).find((m) => m.tag === tag);
+  const cablesOn = (sheet, tag) => (T.sheets[sheet].cables || []).filter((c) => c.ends.some((e) => e.dev === tag));
+  const servicesOn = (sheet, tag) => (T.sheets[sheet].services || []).filter((s) => s.dev === tag);
+  const platesOn = (sheet) => PLATES[sheet] || [];
+
+  // ------------------------------------------------------------------ state
+  const isPhone = () => matchMedia('(max-width: 768px)').matches;
+  const st = {
+    pair: 0, sel: null, preset: 'all',
+    main: 'S',              // which drawing is primary (left on desktop, full screen on phone)
+    desk: 'split',          // split | only
+    phone: 'pip',           // pip | split | min
+    corner: 'br', ratio: 0.6, pratio: 0.5, expanded: false,
+  };
+  const stage = $('#stage'), paneS = $('#paneS'), paneE = $('#paneE'), divider = $('#divider'), dock = $('#dock');
+  const pane = (k) => (k === 'S' ? paneS : paneE);
+  const other = (k) => (k === 'S' ? 'E' : 'S');
+
+  // ------------------------------------------------------------------ viewers
+  let pipRect = null; // stage-relative rect of the PiP card, when shown
+  function insetsFor(key) {
+    return () => {
+      if (!pipRect || !isPhone() || st.phone !== 'pip' || st.main !== key) return {};
+      const top = pipRect.y < stage.clientHeight / 2;
+      return top ? { top: pipRect.y + pipRect.h + 6 } : { bottom: stage.clientHeight - pipRect.y + 6 };
+    };
+  }
+  const sv = VT.create(T, $('#vS'), { sheet: 'AVS01', autoSelect: false, insets: insetsFor('S') });
+  const ev = VT.create(T, $('#vE'), { sheet: 'AVE01', autoSelect: false, insets: insetsFor('E') });
+  window.sv = sv; window.ev = ev;
+  await Promise.all([sv.ready, ev.ready]);
+  const viewer = (k) => (k === 'S' ? sv : ev);
+
+  // plates overlay: sits above the elevation's veil so highlighted plates read clearly
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const plateG = document.createElementNS(SVGNS, 'g');
+  plateG.setAttribute('class', 'plate-hl');
+  ev.svg.querySelector('.vt-vp').appendChild(plateG);
+
+  // ------------------------------------------------------------------ selection model
+  // ref: {kind:'device',tag} | {kind:'cable',id} | {kind:'port',tag,port,cable} | {kind:'plate',id} | null
+  const hiddenNow = () => { const p = PRESETS.find((x) => x.id === st.preset); return p.show ? ALL_CLASSES.filter((c) => !p.show.includes(c)) : []; };
+  const cableVisible = (c) => !hiddenNow().includes(c.cls);
+
+  function platesFor(ref) {
+    const E = PAIRS[st.pair].e;
+    const ps = platesOn(E);
+    if (!ref) return [];
+    if (ref.kind === 'plate') return ps.filter((p) => p.id === ref.id);
+    if (ref.kind === 'device') {
+      const svcs = servicesOn(PAIRS[st.pair].s, ref.tag).map((s) => s.text);
+      const cids = cablesOn(PAIRS[st.pair].s, ref.tag).map((c) => c.id);
+      return ps.filter((p) => (p.svc && svcs.includes(p.svc)) || (p.cables && p.cables.some((id) => cids.includes(id))) || (p.devs && p.devs.includes(ref.tag)));
+    }
+    const cid = ref.kind === 'cable' ? ref.id : ref.cable;
+    return ps.filter((p) => p.cables && p.cables.includes(cid));
+  }
+  function plateFeeds(p) {
+    const S = PAIRS[st.pair].s;
+    const devs = new Set(), svcs = [], cables = [];
+    if (p.svc) (T.sheets[S].services || []).forEach((s) => { if (s.text === p.svc) { devs.add(s.dev); svcs.push(s.id); } });
+    (p.cables || []).forEach((id) => { const c = T.cables[id]; if (c) { cables.push(id); c.ends.forEach((e) => devOn(S, e.dev) && devs.add(e.dev)); } });
+    (p.devs || []).forEach((d) => devs.add(d));
+    return { devices: [...devs], services: svcs, cables };
+  }
+
+  function schematicFocus(ref) {
+    const S = PAIRS[st.pair].s;
+    if (ref.kind === 'device') {
+      const cs = cablesOn(S, ref.tag);
+      return {
+        cables: cs.map((c) => c.id),
+        devices: [ref.tag, ...cs.map((c) => T.peer(c, ref.tag).dev).filter((t) => devOn(S, t))],
+        ports: cs.flatMap((c) => c.ends.filter((e) => e.port).map((e) => e.dev + '|' + e.port)),
+        services: servicesOn(S, ref.tag).map((s) => s.id),
+        primary: ref.tag,
+      };
+    }
+    return T.focusFor(ref);
+  }
+  // units on the elevation that the selection touches
+  function elevDevices(ref) {
+    const E = PAIRS[st.pair].e, S = PAIRS[st.pair].s;
+    if (!ref) return [];
+    let tags = [];
+    if (ref.kind === 'device') tags = [ref.tag];
+    else if (ref.kind === 'plate') tags = plateFeeds(platesOn(E).find((p) => p.id === ref.id)).devices;
+    else tags = T.cables[ref.kind === 'cable' ? ref.id : ref.cable].ends.map((e) => e.dev);
+    return tags.filter((t) => markOn(E, t));
+  }
+
+  function select(ref, from) {
+    if (ref && ref.kind === 'port' && !ref.cable) ref = { kind: 'device', tag: ref.tag };
+    st.sel = ref || null;
+    const S = PAIRS[st.pair].s;
+    if (!ref) { sv.clear(); ev.clear(); }
+    else if (ref.kind === 'plate') {
+      const f = plateFeeds(platesOn(PAIRS[st.pair].e).find((p) => p.id === ref.id));
+      sv.select(null);
+      sv.focus({ cables: f.cables, devices: f.devices.filter((t) => devOn(S, t)), services: f.services, ports: [] }, { zoom: true });
+    } else if (ref.kind === 'device' && !devOn(S, ref.tag)) sv.clear();
+    else sv.select(ref, { focus: schematicFocus(ref), zoom: true });
+    // elevation follows
+    const tags = elevDevices(ref);
+    if (ref && (tags.length || platesFor(ref).length)) {
+      ev.select(null);
+      const primary = ref.kind === 'device' ? ref.tag : null;
+      ev.focus({ devices: tags, primary });
+    } else if (ref) ev.focus({ devices: [] });
+    else ev.clear();
+    drawPlates();
+    frameElevation();
+    renderStrip();
+    if (isPhone() && st.phone === 'min' && ref) setPhone('pip');
+    settlePip();
+  }
+  window.selectRef = select;
+
+  function frameElevation(ms) {
+    const E = PAIRS[st.pair].e;
+    if (pane('E').classList.contains('hidden')) return;
+    const ref = st.sel;
+    const boxes = [];
+    elevDevices(ref).forEach((t) => boxes.push(markOn(E, t).box));
+    platesFor(ref).forEach((p) => boxes.push(p.box));
+    const note = paneE.querySelector('[data-note]');
+    note.textContent = paneE.classList.contains('pip') ? elevNote(ref).replace(/^[A-Z0-9-]+ · /, '') : elevNote(ref);
+    if (!boxes.length) { homeElevation(ms); return; }
+    let x1 = Math.min(...boxes.map((b) => b[0])), y1 = Math.min(...boxes.map((b) => b[1]));
+    let x2 = Math.max(...boxes.map((b) => b[0] + b[2])), y2 = Math.max(...boxes.map((b) => b[1] + b[3]));
+    // keep enough of the wall in frame to read where the unit physically sits
+    const minW = 420, minH = 300;
+    if (x2 - x1 < minW) { const c = (x1 + x2) / 2; x1 = c - minW / 2; x2 = c + minW / 2; }
+    if (y2 - y1 < minH) { const c = (y1 + y2) / 2; y1 = c - minH / 2; y2 = c + minH / 2; }
+    ev.zoomToBox([x1 - 30, y1 - 30, x2 - x1 + 60, y2 - y1 + 60], { maxK: 6, ms: ms == null ? 340 : ms, pad: 10 });
+  }
+  function homeElevation(ms) {
+    const E = PAIRS[st.pair].e;
+    // a small pane (the phone PiP) starts on the display wall, where most of the kit lives
+    const box = HOME[E] && ev.svg.clientWidth < 420 ? HOME_WALL[E] : HOME[E];
+    if (box) ev.zoomToBox(box, { maxK: 6, ms: ms == null ? 300 : ms, pad: 6 }); else ev.zoomToFit(ms);
+  }
+  function whereOnWall(tag) {
+    const m = markOn(PAIRS[st.pair].e, tag);
+    if (!m) return PAIRS[st.pair].e === 'AVE02' ? 'Survey hold, not marked on AVE02' : (NOT_ON_WALL[tag] || 'Not on this elevation');
+    if (tag === 'LCD-01') return 'Display wall';
+    const b = m.box, cx = b[0] + b[2] / 2, cy = b[1] + b[3] / 2, D = DISPLAY_BOX;
+    if (cx > D[0] && cx < D[0] + D[2] && cy > D[1] && cy < D[1] + D[3]) return 'Concealed behind display';
+    if (cx > 1500) return 'Table';
+    if (cy < D[1]) return 'Above display';
+    return 'Below display';
+  }
+  function elevNote(ref) {
+    if (!ref) return '';
+    if (PAIRS[st.pair].e === 'AVE02') return 'Survey hold · no unit marks yet';
+    if (ref.kind === 'device') return `${ref.tag} · ${whereOnWall(ref.tag)}`;
+    if (ref.kind === 'plate') { const p = platesOn(PAIRS[st.pair].e).find((x) => x.id === ref.id); return `${p.label} plate · ${p.where}`; }
+    const c = T.cables[ref.kind === 'cable' ? ref.id : ref.cable];
+    return c.ends.map((e) => e.dev).join(' ↔ ');
+  }
+
+  function drawPlates() {
+    plateG.innerHTML = '';
+    const E = PAIRS[st.pair].e;
+    if (ev.sheet !== E) return;
+    const hl = platesFor(st.sel), hidden = hiddenNow();
+    hl.forEach((p) => {
+      if (hidden.includes(p.cls)) return;
+      const b = p.box, isSel = st.sel && st.sel.kind === 'plate' && st.sel.id === p.id;
+      const halo = document.createElementNS(SVGNS, 'rect');
+      Object.entries({ x: b[0] - 7, y: b[1] - 7, width: b[2] + 14, height: b[3] + 14, rx: 6, class: 'halo' }).forEach(([k, v]) => halo.setAttribute(k, v));
+      const r = document.createElementNS(SVGNS, 'rect');
+      Object.entries({ x: b[0], y: b[1], width: b[2], height: b[3], rx: 2, class: 'pl' + (isSel ? ' sel' : '') }).forEach(([k, v]) => r.setAttribute(k, v));
+      const t = document.createElementNS(SVGNS, 'text');
+      t.setAttribute('x', b[0] + b[2] / 2); t.setAttribute('y', b[1] + b[3] / 2); t.textContent = p.label;
+      plateG.append(halo, r, t);
+    });
+  }
+
+  // ------------------------------------------------------------------ taps (both drawings)
+  sv.on('tap', (e) => {
+    const h = e.hit;
+    select(h && h.kind === 'device' ? { kind: 'device', tag: h.tag } : h, 'S');
+  });
+  ev.on('tap', (e) => {
+    const cam = ev.cam, wx = (e.x - cam.x) / cam.k, wy = (e.y - cam.y) / cam.k, m = 8 / cam.k;
+    const p = platesOn(ev.sheet).find((q) => wx >= q.box[0] - m && wx <= q.box[0] + q.box[2] + m && wy >= q.box[1] - m && wy <= q.box[1] + q.box[3] + m);
+    if (p && !hiddenNow().includes(p.cls)) return select({ kind: 'plate', id: p.id }, 'E');
+    select(e.hit && e.hit.kind === 'device' ? { kind: 'device', tag: e.hit.tag } : null, 'E');
+  });
+  // desktop: hovering one drawing previews the same unit on the other
+  sv.on('hover', (h) => { const t = h && (h.kind === 'device' ? h.tag : null); t && markOn(ev.sheet, t) ? ev.peek({ kind: 'device', tag: t }) : ev.unpeek(); });
+  ev.on('hover', (h) => { h && h.kind === 'device' && devOn(sv.sheet, h.tag) ? sv.peek({ kind: 'device', tag: h.tag }) : sv.unpeek(); });
+  sv.on('gesture', (g) => g === 'end' && settlePip());
+  ev.on('gesture', (g) => g === 'end' && settlePip());
+
+  // ------------------------------------------------------------------ info strip
+  const svcIcon = (t) => (/MATV/.test(t) ? 'settop_component' : 'power');
+  function connRow(c, tag) {
+    const far = T.peer(c, tag), mine = T.mine(c, tag);
+    return `<button class="conn" data-cable="${c.id}" ${cableVisible(c) ? '' : 'style="opacity:.45"'}><span class="chip-id">${c.id}</span>${esc(c.badge)} <span class="arrow">${mine.port ? esc(mine.port) + ' →' : '→'}</span> <span class="to">${esc(far.dev)}</span></button>`;
+  }
+  const viewBtns = () => `
+    <div class="views">
+      <button class="btn" data-view="swap"><span class="msi">swap_horiz</span>Swap</button>
+      <button class="btn" data-view="E" aria-pressed="${st.desk === 'only' && st.main === 'E'}"><span class="msi">wallpaper</span>Elevation only</button>
+      <button class="btn" data-view="S" aria-pressed="${st.desk === 'only' && st.main === 'S'}"><span class="msi">schema</span>Schematic only</button>
+    </div>`;
+  const phoneBtns = (expandable) => `
+    ${st.phone === 'min' ? `<button class="btn wall-tab" data-act="restore"><span class="msi">${st.main === 'S' ? 'wallpaper' : 'schema'}</span>${st.main === 'S' ? 'Wall' : 'Schematic'}</button>` : ''}
+    ${expandable ? `<button class="btn icon ghost more-btn" data-act="more" aria-expanded="${st.expanded}" aria-label="${st.expanded ? 'Show less' : 'Show connections'}"><span class="msi">${st.expanded ? 'expand_more' : 'expand_less'}</span></button>` : ''}`;
+
+  function renderStrip() {
+    const ref = st.sel, S = PAIRS[st.pair].s, E = PAIRS[st.pair].e;
+    const strip = $('#strip');
+    dock.classList.toggle('expanded', st.expanded && !!ref);
+    if (!ref) {
+      strip.innerHTML = `<div class="hint"><span class="msi">touch_app</span><span>Tap a unit or a wire on either drawing.<span class="desk-only"> The other drawing follows.</span></span></div>
+        <button class="btn icon ghost fit-btn" data-act="fitall" aria-label="Fit both drawings"><span class="msi">fit_screen</span></button>${phoneBtns(false)}${viewBtns()}`;
+    } else if (ref.kind === 'device') {
+      const d = devOn(S, ref.tag) || {};
+      const cs = cablesOn(S, ref.tag), svcs = servicesOn(S, ref.tag);
+      const vis = cs.filter(cableVisible).length;
+      strip.innerHTML = `
+        <div class="who"><span class="tagbox">${esc(ref.tag)}</span><div class="mm"><div class="t1">${esc([d.make, d.model].filter(Boolean).join(' ') || ref.tag)}</div><div class="t2">${esc(d.desc || '')}${d.desc ? ' · ' : ''}${esc(whereOnWall(ref.tag))}</div></div></div>
+        <div class="count"><b>${cs.length}</b><span>${vis === cs.length ? 'connections' : vis + ' shown'}</span></div>
+        <div class="feeds">${svcs.length ? `<span class="lab">Feeds</span>` + svcs.map((s) => {
+            const pl = platesOn(E).filter((p) => p.svc === s.text);
+            return `<button class="svc" data-svc="${esc(s.text)}"><span class="msi">${svcIcon(s.text)}</span>${esc(s.text)} <small>${esc(s.port)}</small></button>`; }).join('') : `<span class="lab">No service feeds</span>`}</div>
+        <div class="extra"><div class="conns">${cs.map((c) => connRow(c, ref.tag)).join('') || '<span class="lab">No cables on this sheet</span>'}</div></div>
+        ${phoneBtns(cs.length > 0)}${viewBtns()}`;
+    } else if (ref.kind === 'plate') {
+      const p = platesOn(E).find((x) => x.id === ref.id), f = plateFeeds(p);
+      strip.innerHTML = `
+        <div class="who"><span class="tagbox">${esc(p.label)}</span><div class="mm"><div class="t1">${esc(p.svc || (p.cables ? 'Cable pathway ' + p.cables.join(', ') : 'Data outlet'))}</div><div class="t2">${esc(p.where)} · outlet plate on ${E}</div></div></div>
+        <div class="count"><b>${f.devices.length}</b><span>${p.svc ? 'units fed' : 'units'}</span></div>
+        <div class="feeds"><span class="lab">Serves</span>${f.devices.map((t) => `<button class="svc" data-dev="${esc(t)}"><span class="msi">memory</span>${esc(t)}</button>`).join('')}</div>
+        ${viewBtns()}`;
+    } else {
+      const c = T.cables[ref.kind === 'cable' ? ref.id : ref.cable];
+      const [a, b] = c.ends;
+      const pl = platesFor(ref);
+      strip.innerHTML = `
+        <div class="who"><span class="chip-id" style="font-size:14px;padding:7px 9px 7px 7px">${c.id}</span><div class="mm"><div class="t1">${esc(c.badge)} · ${esc(T.classes[c.cls].label)}</div><div class="t2">${c.cable ? esc(c.cable) + ' · ' : ''}one cable</div></div></div>
+        <div class="ends">
+          <button class="endbtn" data-dev="${esc(a.dev)}"><span><b>${esc(a.dev)}</b><br><span>${esc(a.port || '')}</span></span></button>
+          <span class="msi arrow">arrow_forward</span>
+          <button class="endbtn" data-dev="${esc(b.dev)}"><span><b>${esc(b.dev)}</b><br><span>${esc(b.port || '')}</span></span></button>
+        </div>
+        <div class="feeds">${pl.length ? '<span class="lab">Via plates</span>' + pl.map((p) => `<button class="svc" data-plate="${p.id}"><span class="msi">outlet</span>${esc(p.label)} <small>${esc(p.where)}</small></button>`).join('') : ''}</div>
+        <div class="extra"><div class="label-strip">${esc(T.label(c))}</div></div>
+        ${phoneBtns(true)}${viewBtns()}`;
+    }
+    // desktop: show the physical label inline for cables
+  }
+  $('#strip').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.cable) return select({ kind: 'cable', id: b.dataset.cable });
+    if (b.dataset.dev) return select({ kind: 'device', tag: b.dataset.dev });
+    if (b.dataset.plate) return select({ kind: 'plate', id: b.dataset.plate });
+    if (b.dataset.svc) { const p = platesOn(PAIRS[st.pair].e).find((x) => x.svc === b.dataset.svc); if (p) select({ kind: 'plate', id: p.id }); else flashNote(b.dataset.svc); return; }
+    if (b.dataset.view) return setDeskView(b.dataset.view);
+    const act = b.dataset.act;
+    if (act === 'more') { st.expanded = !st.expanded; renderStrip(); afterDock(); }
+    if (act === 'restore') setPhone('pip');
+    if (act === 'fitall') { homeSchematic(); homeElevation(); }
+  });
+  function flashNote(t) { paneE.querySelector('[data-note]').textContent = `${t} · not drawn on ${PAIRS[st.pair].e}`; }
+  // the dock changed height: the stage shrank, so re-land the zoom in what is visible
+  function afterDock() { requestAnimationFrame(() => { layout(); reframe(0); }); }
+
+  // ------------------------------------------------------------------ layer presets
+  $$('[data-seg]').forEach((seg) => {
+    seg.innerHTML = PRESETS.map((p) => `<button role="radio" data-preset="${p.id}" aria-checked="${p.id === st.preset}"><span class="lg">${p.label}</span><span class="sh" hidden>${p.short}</span>${p.codes ? `<b>${p.codes}</b>` : ''}</button>`).join('');
+    seg.addEventListener('click', (e) => { const b = e.target.closest('[data-preset]'); if (b) setPreset(b.dataset.preset); });
+  });
+  function syncSegLabels() {
+    $$('[data-seg] button').forEach((b) => { const ph = isPhone(); b.querySelector('.lg').hidden = ph; b.querySelector('.sh').hidden = !ph; });
+  }
+  function setPreset(id) {
+    st.preset = id;
+    $$('[data-preset]').forEach((b) => b.setAttribute('aria-checked', b.dataset.preset === id));
+    const hid = hiddenNow();
+    sv.setHidden(hid); ev.setHidden(hid);
+    const s = st.sel;
+    if (s && (s.kind === 'cable' || s.kind === 'port') && hid.includes(T.cables[s.kind === 'cable' ? s.id : s.cable].cls)) select(null);
+    else if (s && s.kind === 'plate' && hid.includes(platesOn(PAIRS[st.pair].e).find((p) => p.id === s.id).cls)) select(null);
+    else { drawPlates(); renderStrip(); }
+  }
+
+  // ------------------------------------------------------------------ sheet pairs
+  const menu = $('#sheetMenu'), sheetBtn = $('#sheetBtn');
+  function renderMenu() {
+    menu.innerHTML = `<h4>Sheet pair</h4>` + PAIRS.map((p, i) => `<button role="menuitemradio" aria-checked="${i === st.pair}" data-pair="${i}">
+      <span class="msi">${i ? 'pending_actions' : 'meeting_room'}</span><span><div class="pair">${p.s} + ${p.e} · ${esc(p.name)}</div><div class="sub">${esc(p.sub)}</div></span><span class="msi tick">check</span></button>`).join('');
+    $('#sheetCode').textContent = `${PAIRS[st.pair].s} + ${PAIRS[st.pair].e}`;
+    $('#sheetLbl').textContent = ' · ' + PAIRS[st.pair].name;
+  }
+  sheetBtn.addEventListener('click', (e) => { e.stopPropagation(); const o = !menu.classList.contains('open'); menu.classList.toggle('open', o); sheetBtn.setAttribute('aria-expanded', o); });
+  document.addEventListener('pointerdown', (e) => { if (!e.target.closest('.menu-wrap')) { menu.classList.remove('open'); sheetBtn.setAttribute('aria-expanded', false); } });
+  menu.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-pair]');
+    if (!b) return;
+    menu.classList.remove('open');
+    st.pair = +b.dataset.pair;
+    select(null);
+    await Promise.all([sv.setSheet(PAIRS[st.pair].s, { fit: true }), ev.setSheet(PAIRS[st.pair].e, { fit: true })]);
+    paneS.querySelector('[data-code]').textContent = PAIRS[st.pair].s;
+    paneE.querySelector('[data-code]').textContent = PAIRS[st.pair].e;
+    renderMenu(); drawPlates(); renderStrip(); reframe(0);
+  });
+
+  // ------------------------------------------------------------------ layout
+  function place(el, r) { Object.assign(el.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' }); }
+  function pipBox(corner) {
+    const W = stage.clientWidth, H = stage.clientHeight, m = 10;
+    const w = Math.round(W * 0.42), h = Math.round(w * 0.75) + 44;
+    return { x: corner[1] === 'l' ? m : W - w - m, y: corner[0] === 't' ? m : H - h - m, w, h };
+  }
+  function setBtns(p, list) { $$('.pane-hd [data-act]', p).forEach((b) => (b.hidden = !list.includes(b.dataset.act))); }
+  function layout() {
+    const W = stage.clientWidth, H = stage.clientHeight;
+    const A = pane(st.main), B = pane(other(st.main));
+    [A, B].forEach((p) => p.classList.remove('hidden', 'pip'));
+    divider.classList.remove('hidden', 'v', 'h');
+    pipRect = null;
+    syncSegLabels();
+    if (!isPhone()) {
+      paneS.querySelector('.pane-hd').style.display = paneE.querySelector('.pane-hd').style.display = '';
+      if (st.desk === 'only') { place(A, { x: 0, y: 0, w: W, h: H }); B.classList.add('hidden'); divider.classList.add('hidden'); }
+      else {
+        const a = Math.round(W * st.ratio);
+        place(A, { x: 0, y: 0, w: a - 5, h: H }); place(divider, { x: a - 5, y: 0, w: 10, h: H }); place(B, { x: a + 5, y: 0, w: W - a - 5, h: H });
+        divider.classList.add('v');
+      }
+      [A, B].forEach((p) => setBtns(p, ['zoomout', 'zoomin', 'fit']));
+      return;
+    }
+    if (st.phone === 'split') {
+      const a = Math.round(H * st.pratio);
+      place(A, { x: 0, y: 0, w: W, h: a - 5 }); place(divider, { x: 0, y: a - 5, w: W, h: 10 }); place(B, { x: 0, y: a + 5, w: W, h: H - a - 5 });
+      divider.classList.add('h');
+      A.querySelector('.pane-hd').style.display = B.querySelector('.pane-hd').style.display = '';
+      setBtns(A, ['fit', 'swap']); setBtns(B, ['fit', 'swap', 'pip']);
+      return;
+    }
+    place(A, { x: 0, y: 0, w: W, h: H });
+    A.querySelector('.pane-hd').style.display = 'none';
+    divider.classList.add('hidden');
+    if (st.phone === 'min') { B.classList.add('hidden'); return; }
+    B.classList.add('pip');
+    B.querySelector('.pane-hd').style.display = '';
+    pipRect = pipBox(st.corner);
+    place(B, pipRect);
+    setBtns(B, st.sel ? ['expand'] : ['expand', 'min']);
+  }
+  // the useful part of a schematic is its location zones; the title block and notes can wait
+  function homeSchematic(ms) {
+    const zs = T.sheets[sv.sheet].zones || [];
+    if (!zs.length) return sv.zoomToFit(ms);
+    const x1 = Math.min(...zs.map((z) => z.box[0])), y1 = Math.min(...zs.map((z) => z.box[1]));
+    const x2 = Math.max(...zs.map((z) => z.box[0] + z.box[2])), y2 = Math.max(...zs.map((z) => z.box[1] + z.box[3]));
+    sv.zoomToBox([x1 - 10, y1 - 10, x2 - x1 + 20, y2 - y1 + 20], { maxK: 4, pad: 6, ms: ms == null ? 300 : ms });
+  }
+  function reframe(ms) {
+    if (!pane('S').classList.contains('hidden')) { if (sv.focused) sv.fitFocus({ ms }); else homeSchematic(ms); }
+    frameElevation(ms);
+  }
+  function relayout(ms) { layout(); requestAnimationFrame(() => reframe(ms == null ? 0 : ms)); }
+  function setDeskView(v) {
+    if (v === 'swap') { st.main = other(st.main); }
+    else if (st.desk === 'only' && st.main === v) st.desk = 'split';
+    else { st.desk = 'only'; st.main = v; }
+    relayout(); renderStrip();
+  }
+  function setPhone(mode) { st.phone = mode; relayout(); renderStrip(); }
+  window.wallWire = { st, layout, setPhone, setDeskView, select, pipRect: () => pipRect };
+
+  stage.addEventListener('click', (e) => {
+    const b = e.target.closest('.pane-hd [data-act]');
+    if (!b) return;
+    const k = b.closest('.pane').dataset.key, v = viewer(k), act = b.dataset.act;
+    if (act === 'zoomin') v.zoomBy(1.4);
+    if (act === 'zoomout') v.zoomBy(1 / 1.4);
+    if (act === 'fit') { if (k === 'E') homeElevation(); else homeSchematic(); }
+    if (act === 'swap') { st.main = other(st.main); relayout(); renderStrip(); }
+    if (act === 'expand') setPhone('split');
+    if (act === 'pip') setPhone('pip');
+    if (act === 'min') setPhone('min');
+  });
+
+  // ---- PiP: drag to any corner, tap to swap
+  function pipDrag(handle, tapSwaps) {
+    let d = null;
+    handle.addEventListener('pointerdown', (e) => {
+      const p = handle.closest('.pane');
+      if (!p.classList.contains('pip') || e.target.closest('button')) return;
+      handle.setPointerCapture(e.pointerId);
+      d = { id: e.pointerId, sx: e.clientX, sy: e.clientY, x: pipRect.x, y: pipRect.y, moved: 0, p };
+    });
+    handle.addEventListener('pointermove', (e) => {
+      if (!d || e.pointerId !== d.id) return;
+      const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
+      d.moved = Math.max(d.moved, Math.hypot(dx, dy));
+      if (d.moved > 8) {
+        d.p.classList.add('dragging');
+        const W = stage.clientWidth, H = stage.clientHeight;
+        d.p.style.left = Math.max(0, Math.min(W - pipRect.w, d.x + dx)) + 'px';
+        d.p.style.top = Math.max(0, Math.min(H - pipRect.h, d.y + dy)) + 'px';
+      }
+    });
+    const up = (e) => {
+      if (!d || e.pointerId !== d.id) return;
+      const p = d.p; p.classList.remove('dragging');
+      if (d.moved > 8) {
+        const cx = parseFloat(p.style.left) + pipRect.w / 2, cy = parseFloat(p.style.top) + pipRect.h / 2;
+        st.corner = (cy < stage.clientHeight / 2 ? 't' : 'b') + (cx < stage.clientWidth / 2 ? 'l' : 'r');
+        layout();
+        settlePip();
+      } else if (tapSwaps && e.type === 'pointerup') { st.main = other(st.main); relayout(); renderStrip(); }
+      d = null;
+    };
+    handle.addEventListener('pointerup', up); handle.addEventListener('pointercancel', up);
+  }
+  [paneS, paneE].forEach((p) => { pipDrag(p.querySelector('.pane-hd'), false); pipDrag(p.querySelector('.pip-hit'), true); });
+
+  // ---- PiP never sits on the focused item: move it to a clear corner
+  function focusScreenRect() {
+    const v = viewer(st.main);
+    let b = null;
+    if (st.main === 'S') { const f = sv.focused; if (!f) return null; b = sv.focusBox(f); }
+    else {
+      const E = ev.sheet, bs = elevDevices(st.sel).map((t) => markOn(E, t).box).concat(platesFor(st.sel).map((p) => p.box));
+      if (!bs.length) return null;
+      const x1 = Math.min(...bs.map((q) => q[0])), y1 = Math.min(...bs.map((q) => q[1]));
+      b = [x1, y1, Math.max(...bs.map((q) => q[0] + q[2])) - x1, Math.max(...bs.map((q) => q[1] + q[3])) - y1];
+    }
+    if (!b) return null;
+    const [ax, ay] = v.worldToScreen(b[0], b[1]), [bx, by] = v.worldToScreen(b[0] + b[2], b[1] + b[3]);
+    const vb = v.svg.getBoundingClientRect(), sb = stage.getBoundingClientRect();
+    return { x: ax + vb.left - sb.left, y: ay + vb.top - sb.top, w: bx - ax, h: by - ay };
+  }
+  const overlap = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+  let settleT = 0;
+  function settlePip() {
+    clearTimeout(settleT);
+    settleT = setTimeout(() => {
+      if (!isPhone() || st.phone !== 'pip' || !st.sel) { if (isPhone() && st.phone === 'pip') layout(); return; }
+      const fr = focusScreenRect();
+      if (!fr) return;
+      const cur = overlap(fr, pipBox(st.corner));
+      if (cur < 1) return;
+      const best = ['br', 'bl', 'tr', 'tl'].map((c) => [c, overlap(fr, pipBox(c))]).sort((a, b) => a[1] - b[1])[0];
+      if (best[1] < cur) { st.corner = best[0]; layout(); }
+    }, 420);
+  }
+
+  // ---- divider drag (desktop columns, phone rows)
+  divider.addEventListener('pointerdown', (e) => {
+    divider.setPointerCapture(e.pointerId); divider.classList.add('dragging');
+    const move = (ev2) => {
+      const r = stage.getBoundingClientRect();
+      if (divider.classList.contains('v')) st.ratio = Math.max(0.3, Math.min(0.8, (ev2.clientX - r.left) / r.width));
+      else st.pratio = Math.max(0.25, Math.min(0.75, (ev2.clientY - r.top) / r.height));
+      layout();
+    };
+    const upd = () => { divider.classList.remove('dragging'); divider.removeEventListener('pointermove', move); divider.removeEventListener('pointerup', upd); reframe(200); };
+    divider.addEventListener('pointermove', move); divider.addEventListener('pointerup', upd);
+  });
+
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { menu.classList.remove('open'); select(null); } });
+  let lastPhone = isPhone();
+  window.addEventListener('resize', () => { const p = isPhone(); layout(); renderStrip(); if (p !== lastPhone) { lastPhone = p; requestAnimationFrame(() => reframe(0)); } });
+
+  renderMenu(); renderStrip(); layout();
+  requestAnimationFrame(() => { reframe(0); document.documentElement.dataset.ready = '1'; });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F335C">
+<title>Option 2 · Press &amp; Hold — SKS Visio Trace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500;700;900&family=Mulish:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+<link rel="stylesheet" href="shared/vt.css">
+<style>
+  [hidden] { display: none !important; }
+  body { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; height: 100vh; height: 100dvh; -webkit-touch-callout: none; }
+
+  /* ---------- top: one pill, nothing else */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0;
+    padding: calc(6px + var(--safe-top)) calc(12px + var(--safe-right)) 6px calc(10px + var(--safe-left)); }
+  .pill { display: flex; align-items: center; min-width: 0; flex-shrink: 1; height: 48px; background: #fff; border: 1px solid var(--line);
+    border-radius: 999px; box-shadow: 0 1px 2px rgba(31, 51, 92, .06); }
+  .pill .back-link { width: 46px; border-radius: 999px 0 0 999px; color: var(--sks-navy); }
+  .pill .sep { width: 1px; height: 26px; background: var(--line); flex-shrink: 0; }
+  .pill .mark { height: 20px; width: auto; display: block; margin: 0 2px 0 10px; flex-shrink: 0; }
+  .proj { display: flex; align-items: center; gap: 6px; min-width: 0; height: 46px; border: 0; background: none; padding: 0 14px 0 8px;
+    border-radius: 0 999px 999px 0; cursor: pointer; text-align: left; }
+  .proj .txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+  .proj .num { font: 700 11.5px var(--font-head); color: var(--text-2); letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .proj .sheet { font: 700 14px var(--font-head); color: var(--sks-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .proj .msi { font-size: 20px; color: var(--text-2); }
+  .opt-mark { flex-shrink: 0; white-space: nowrap; text-align: right; line-height: 1.35; }
+
+  /* ---------- drawing */
+  #v { position: relative; min-height: 0; }
+
+  /* ---------- bottom status line (its own row: never over the drawing) */
+  .status { background: #fff; border-top: 1px solid var(--line);
+    padding: 0 calc(4px + var(--safe-right)) var(--safe-bottom) calc(14px + var(--safe-left)); }
+  .st-row { display: flex; align-items: center; gap: 6px; min-height: 48px; }
+  .st-text { flex: 1; min-width: 0; display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--sks-navy); white-space: nowrap; overflow: hidden; }
+  .st-text .ell { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .st-text .dim { color: var(--text-2); }
+  .st-text b { font-family: var(--font-head); font-weight: 700; }
+  .st-text .msi { font-size: 19px; color: var(--sks-purple); }
+  .st-text.coach { color: var(--text-2); font-weight: 600; }
+  .badge { font: 700 11px/1 var(--font-head); color: var(--sks-navy); border: 1px solid var(--line-strong); border-radius: 4px; padding: 3px 5px; background: var(--sks-light); }
+  .arrow { color: var(--text-3); }
+  .st-btn { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 44px; height: 44px; padding: 0 8px;
+    border: 0; background: none; border-radius: 8px; cursor: pointer; color: var(--sks-navy); font-size: 12.5px; font-weight: 700; }
+  .st-btn:active { background: var(--sks-light); }
+  .st-hidden { border: 1px solid var(--line); height: 34px; margin: 5px 0; padding: 0 10px; border-radius: 99px; color: var(--text-2); }
+  .st-hidden b { color: var(--sks-navy); font-family: var(--font-head); }
+  .ports { display: none; max-height: min(40vh, 300px); overflow: auto; padding: 10px 10px 8px 0; border-bottom: 1px solid var(--line); }
+  .ports.on { display: block; }
+  .ports h4 { margin: 0 0 6px; font: 700 12px var(--font-head); color: var(--text-2); letter-spacing: .06em; text-transform: uppercase; }
+  .plist { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 14px; }
+  .prow { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px;
+    background: #fff; text-align: left; font-size: 13px; color: var(--sks-navy); width: 100%; }
+  button.prow { cursor: pointer; }
+  button.prow:active { background: var(--sks-light); }
+  .prow .pn { font: 700 12.5px var(--font-head); min-width: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prow .pc { color: var(--text-3); font-size: 11.5px; white-space: nowrap; }
+  .prow .pt { color: var(--text-2); font-size: 12.5px; white-space: nowrap; }
+  .prow.free { background: var(--sks-light); border-color: transparent; color: var(--text-3); }
+  .prow.free .pn { color: var(--text-2); font-weight: 500; }
+
+  /* ---------- radial menu (only while held / open) */
+  .rm-catch { position: absolute; inset: 0; z-index: 20; touch-action: none; display: none; }
+  .rm-catch.on { display: block; }
+  .rm { position: absolute; transform: translate(-50%, -50%) scale(.82); opacity: 0; transition: transform .12s ease-out, opacity .12s ease-out; }
+  .rm.on { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  .rm svg { position: absolute; inset: 0; overflow: visible; filter: drop-shadow(0 8px 22px rgba(31, 51, 92, .26)); }
+  .rm-w { fill: #fff; stroke: var(--bg); stroke-width: 3; transition: fill .08s; }
+  .rm-w.off { fill: var(--sks-light); }
+  .rm-w.hov { fill: var(--sks-navy); }
+  .rm-w.done { fill: var(--sks-purple); }
+  .rm-hub { fill: var(--sks-light); stroke: var(--bg); stroke-width: 3; }
+  .rm-l { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center;
+    pointer-events: none; color: var(--sks-navy); font: 700 10.5px/1.12 var(--font); }
+  .rm-l .msi { font-size: 21px; }
+  .rm-l .lt { font: 900 18px/1 var(--font-head); letter-spacing: .01em; }
+  .rm-l .st { font-size: 9.5px; font-weight: 600; color: var(--text-2); }
+  .rm-l.off .lt { color: var(--text-3); text-decoration: line-through; text-decoration-thickness: 2px; }
+  .rm-l.off { color: var(--text-2); }
+  .rm-l.cur .st { color: var(--sks-purple); font-weight: 800; }
+  .rm-l.hov, .rm-l.hov .st, .rm-l.hov .lt, .rm-l.done, .rm-l.done .st { color: #fff; }
+  .rm-c { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; pointer-events: none; color: var(--sks-navy); }
+  .rm-c .t { font: 700 12px/1.1 var(--font-head); }
+  .rm-c .h { font-size: 10px; line-height: 1.2; color: var(--text-2); margin-top: 3px; font-weight: 600; }
+  .rm-dot { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; border: 2px solid var(--sks-purple); background: #fff; pointer-events: none; }
+
+  @media (max-width: 768px) {
+    .top { padding-left: calc(8px + var(--safe-left)); padding-right: calc(10px + var(--safe-right)); }
+    .pill { flex: 1; max-width: 300px; }
+    .proj .sheet { font-size: 13px; }
+    .opt-mark { font-size: 10px; }
+    .st-text { font-size: 13px; gap: 6px; }
+    .st-text .wide { display: none; }
+    .plist { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="pill">
+    <a class="back-link" href="./" aria-label="Back to options"><span class="msi">arrow_back</span></a>
+    <span class="sep"></span>
+    <img class="mark" src="assets/sks-mark.png" alt="SKS">
+    <button class="proj" id="proj" type="button" aria-label="Choose sheet">
+      <span class="txt"><span class="num" id="projNum"></span><span class="sheet" id="sheetName"></span></span>
+      <span class="msi">expand_more</span>
+    </button>
+  </div>
+  <div class="opt-mark">Option 2<br>Press &amp; Hold</div>
+</header>
+<div id="v"></div>
+<footer class="status" id="status">
+  <div class="ports" id="ports"></div>
+  <div class="st-row">
+    <div class="st-text" id="stText"></div>
+    <button class="st-btn st-hidden" id="stHidden" type="button" hidden></button>
+    <button class="st-btn" id="stPorts" type="button" hidden aria-label="Ports list"><span class="msi">lan</span></button>
+    <button class="st-btn" id="stClear" type="button" hidden aria-label="Clear selection"><span class="msi">close</span></button>
+  </div>
+</footer>
+<script src="shared/vt.js"></script>
+<script>
+(async () => {
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  const CLS_ORDER = ['video', 'audio', 'control', 'network', 'usb', 'spk', 'power'];
+  const SHORT = { video: 'Video', audio: 'Audio', control: 'Control', network: 'Network', usb: 'USB', spk: 'Speaker', power: 'Power' };
+
+  const T = await VT.load('data/drawing.json');
+  const host = $('#v');
+  const v = VT.create(T, host, { sheet: 'AVS01', insets: () => ({ top: 6, right: 6, bottom: 6, left: 6 }) });
+  window.T = T; window.v = v;
+
+  $('#projNum').textContent = T.project.number + ' · ' + T.project.name;
+  const sheetTitle = (id) => (T.sheets[id].title || id).replace(/^(\w+)\s*-\s*/, '$1 · ');
+  v.on('sheet', (id) => { $('#sheetName').textContent = sheetTitle(id); });
+  await v.ready;
+  $('#sheetName').textContent = sheetTitle(v.sheet);
+
+  // ------------------------------------------------------------ status line
+  let coached = false;
+  try { coached = localStorage.getItem('vt2.coached') === '1'; } catch (e) {}
+  let pending = null, mode = null, portsTag = null;
+
+  const sheetDev = (tag, sheet) => (T.sheets[sheet || v.sheet].devices || []).find((d) => d.tag === tag);
+  const devName = (tag) => esc(tag);
+
+  function cableLine(cid) {
+    const c = T.cables[cid];
+    const [a, b] = c.ends;
+    return `<span class="chip-id">${esc(c.id)}</span><span class="badge">${esc(c.badge)}</span>` +
+      `<span class="ell"><b>${devName(a.dev)}</b> <span class="wide dim">${esc(a.port)}</span> <span class="arrow">→</span> <b>${devName(b.dev)}</b> <span class="wide dim">${esc(b.port === '-' ? '' : b.port)}</span></span>`;
+  }
+
+  function renderStatus() {
+    const ref = v.selected, st = $('#stText');
+    st.classList.remove('coach');
+    if (!ref) {
+      if (!coached) {
+        st.classList.add('coach');
+        st.innerHTML = `<span class="msi">touch_app</span><span class="ell">${coarse ? 'Tap a wire or unit · press &amp; hold for tools' : 'Click a wire or unit · hold or right-click for tools'}</span>`;
+      } else {
+        st.innerHTML = `<span class="ell dim">Nothing selected · hold anywhere for tools</span>`;
+      }
+    } else if (ref.kind === 'cable' || ref.kind === 'port') {
+      st.innerHTML = cableLine(ref.kind === 'cable' ? ref.id : ref.cable);
+    } else if (mode && mode.kind === 'trace') {
+      const r = mode.res, n = r.cables.length, u = r.devices.length - 1;
+      st.innerHTML = `<span class="msi">${mode.dir === 'down' ? 'south_east' : 'north_west'}</span><span class="ell"><b>${devName(ref.tag)}</b> <span class="dim">· ${mode.dir === 'down' ? 'downstream' : 'upstream'} · ${n} cable${n === 1 ? '' : 's'} · ${u} unit${u === 1 ? '' : 's'}</span></span>`;
+    } else if (mode && mode.kind === 'wall') {
+      st.innerHTML = `<span class="msi">tv</span><span class="ell"><b>${devName(ref.tag)}</b> <span class="dim">· on the wall elevation (${esc(v.sheet)})</span></span>`;
+    } else {
+      const d = T.devices[ref.tag] && (sheetDev(ref.tag) || T.devices[ref.tag]);
+      const n = T.cablesOf(ref.tag).length, s = T.servicesOf(ref.tag).length;
+      st.innerHTML = `<span class="ell"><b>${devName(ref.tag)}</b> <span class="dim">· ${n} connection${n === 1 ? '' : 's'}${s ? ` + ${s} service${s === 1 ? '' : 's'}` : ''}</span>` +
+        (d ? ` <span class="wide dim">· ${esc([d.make, d.model].filter(Boolean).join(' '))}</span>` : '') + `</span>`;
+    }
+    $('#stClear').hidden = !ref;
+    $('#stPorts').hidden = !(ref && ref.kind === 'device' && sheetDev(ref.tag) && sheetDev(ref.tag).ports.length);
+    $('#stPorts').setAttribute('aria-pressed', portsTag ? 'true' : 'false');
+    const hid = v.hidden;
+    const sh = $('#stHidden');
+    sh.hidden = !hid.length;
+    if (hid.length) sh.innerHTML = `<b>${CLS_ORDER.filter((c) => hid.includes(c)).map((c) => T.classes[c].prefix).join(' ')}</b> hidden <span class="msi" style="font-size:17px">visibility</span>`;
+    renderPorts();
+  }
+
+  function renderPorts() {
+    const box = $('#ports');
+    const d = portsTag && sheetDev(portsTag);
+    if (!d) { box.classList.remove('on'); box.innerHTML = ''; return; }
+    const rows = d.ports.map((p) => {
+      const c = Object.values(T.cables).find((cc) => cc.ends.some((e) => e.dev === d.tag && e.port === p.name));
+      const sv = T.servicesOf(d.tag).find((s) => s.port === p.name);
+      if (c) {
+        const peer = T.peer(c, d.tag);
+        return `<button class="prow" type="button" data-cable="${esc(c.id)}"><span class="pn">${esc(p.name)}</span><span class="pc">${esc(p.conn || '')}</span>` +
+          `<span class="chip-id">${esc(c.id)}</span><span class="pt">→ ${esc(peer.dev)}</span></button>`;
+      }
+      if (sv) return `<div class="prow"><span class="pn">${esc(p.name)}</span><span class="pc">${esc(p.conn || '')}</span><span class="pt">${esc(sv.text)}</span></div>`;
+      return `<div class="prow free"><span class="pn">${esc(p.name)}</span><span class="pc">${esc(p.conn || '')}</span><span class="pt">spare</span></div>`;
+    }).join('');
+    box.innerHTML = `<h4>${esc(d.tag)} · ${esc([d.make, d.model].filter(Boolean).join(' '))} · ports</h4><div class="plist">${rows}</div>`;
+    box.classList.add('on');
+  }
+  $('#ports').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cable]');
+    if (b) v.select({ kind: 'cable', id: b.dataset.cable }, { zoom: true });
+  });
+
+  v.on('select', (ref) => {
+    mode = pending; pending = null;
+    if (!(ref && ref.kind === 'device' && ref.tag === portsTag)) portsTag = null;
+    renderStatus();
+  });
+  v.on('hidden', () => { renderStatus(); if (M) drawMenu(); });
+  $('#stClear').addEventListener('click', () => { portsTag = null; v.clear(); });
+  $('#stHidden').addEventListener('click', () => v.setHidden([]));
+  $('#stPorts').addEventListener('click', () => {
+    const ref = v.selected;
+    portsTag = portsTag ? null : ref.tag;
+    renderStatus();
+  });
+  renderStatus();
+
+  // keep the focus in view when the status line grows or the window changes
+  let lastW = host.clientWidth, lastH = host.clientHeight, roT = 0;
+  new ResizeObserver(() => {
+    clearTimeout(roT);
+    roT = setTimeout(() => {
+      const dw = Math.abs(host.clientWidth - lastW), dh = Math.abs(host.clientHeight - lastH);
+      if (dw > 20 || dh > 20) { if (v.focused) v.fitFocus({ ms: 180 }); else v.zoomToFit(0); }
+      lastW = host.clientWidth; lastH = host.clientHeight;
+    }, 60);
+  }).observe(host);
+
+  // ------------------------------------------------------------ radial menu
+  const catcher = document.createElement('div');
+  catcher.className = 'rm-catch';
+  host.appendChild(catcher);
+  let M = null;          // open menu state
+  let lastDown = null;   // last pointerdown on the drawing (id, type, button)
+
+  const R0 = 44, R1 = 128;
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).then(() => true, () => legacyCopy(text));
+    return Promise.resolve(legacyCopy(text));
+  }
+  function legacyCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove(); return ok;
+  }
+
+  function selectWith(ref, focusSet, m, o) {
+    pending = m || null;
+    v.select(ref, Object.assign({ zoom: true }, focusSet ? { focus: focusSet } : {}, o || {}));
+  }
+
+  function cableItems(cid) {
+    const c = T.cables[cid], name = SHORT[c.cls], ref = { kind: 'cable', id: cid };
+    const others = CLS_ORDER.filter((k) => k !== c.cls);
+    const onlyNow = others.every((k) => v.hidden.includes(k));
+    const ends = c.ends.map((e) => e.dev).join(' → ');
+    return {
+      title: `‹${c.id}› ${c.badge}`, sub: ends,
+      items: [
+        { icon: 'timeline', label: 'Only this cable', hint: ends, run: () => selectWith(ref, null, null, { zoom: false }) },
+        { icon: 'visibility_off', label: `Hide all ${name}`, hint: `Hide every ${T.classes[c.cls].prefix} cable`, run: () => {
+          const sel = v.selected;
+          if (sel && (sel.kind === 'cable' || sel.kind === 'port') && T.cables[sel.id || sel.cable].cls === c.cls) v.clear();
+          v.setHidden([...new Set([...v.hidden, c.cls])]);
+        } },
+        onlyNow
+          ? { icon: 'layers', label: 'Show all classes', hint: `Only ${name} is showing`, run: () => v.setHidden([]) }
+          : { icon: 'filter_alt', label: `Show ${name} only`, hint: `Hide the other ${others.length} classes`, run: () => v.setHidden(others) },
+        { icon: 'zoom_out_map', label: 'Jump to ends', hint: `Zoom to ${ends}`, run: () => selectWith(ref) },
+        { icon: 'content_copy', label: 'Copy label', hint: T.label(c), run: async (it) => {
+          const ok = await copyText(T.label(c));
+          it.done = ok; it.icon = ok ? 'check' : 'error'; it.label = ok ? 'Copied' : 'Copy failed';
+          it.hint = ok ? 'Label on the clipboard' : 'Clipboard blocked';
+          return { keep: 900 };
+        } },
+      ],
+    };
+  }
+
+  function deviceItems(tag) {
+    const s = T.sheets[v.sheet], ref = { kind: 'device', tag };
+    const n = T.cablesOf(tag).length;
+    const items = [{ icon: 'hub', label: 'All connections', hint: `${n} cable${n === 1 ? '' : 's'}`, run: () => selectWith(ref) }];
+    ['down', 'up'].forEach((dir) => {
+      const res = T.trace(tag, { dir });
+      if (!res.cables.length) return;
+      items.push({ icon: dir === 'down' ? 'south_east' : 'north_west', label: dir === 'down' ? 'Trace downstream' : 'Trace upstream',
+        hint: `${res.cables.length} cable${res.cables.length === 1 ? '' : 's'} · ${res.devices.length - 1} unit${res.devices.length === 2 ? '' : 's'}`,
+        run: () => selectWith(ref, Object.assign({}, res, { primary: tag }), { kind: 'trace', dir, res }) });
+    });
+    const where = T.where(tag);
+    if (s.kind !== 'elevation' && where.some((w) => w.sheet === 'AVE01')) {
+      items.push({ icon: 'tv', label: 'Find on wall', hint: 'Elevation AVE01', run: async () => {
+        await v.setSheet('AVE01');
+        selectWith(ref, { devices: [tag], primary: tag, cables: [], ports: [], services: [] }, { kind: 'wall' }, { zoomOpts: { maxK: 0.7, pad: 40 } });
+      } });
+    }
+    if (s.kind === 'elevation') {
+      const sch = where.find((w) => w.kind === 'schematic');
+      if (sch) items.push({ icon: 'schema', label: 'Show on schematic', hint: sch.sheet, run: async () => { await v.setSheet(sch.sheet); selectWith(ref); } });
+    }
+    const d = sheetDev(tag);
+    if (d && d.ports.length) items.push({ icon: 'lan', label: 'Ports list', hint: `${d.ports.length} ports`, run: () => { portsTag = tag; selectWith(ref); renderStatus(); } });
+    const dd = sheetDev(tag) || T.devices[tag];
+    return { title: tag, sub: dd ? [dd.make, dd.model].filter(Boolean).join(' ') : '', items };
+  }
+
+  function canvasItems() {
+    const hid = v.hidden;
+    const items = CLS_ORDER.map((c) => ({
+      letter: T.classes[c].prefix, label: SHORT[c], off: hid.includes(c),
+      hint: `${T.classes[c].label} · ${hid.includes(c) ? 'hidden' : 'shown'}`,
+      run: () => { v.toggleClass(c); return { keep: true }; },
+    }));
+    items.push({ icon: 'layers', label: 'Show all', hint: hid.length ? `Bring back ${hid.length} class${hid.length === 1 ? '' : 'es'}` : 'Everything is showing',
+      run: () => { v.setHidden([]); return { keep: true }; } });
+    items.push({ icon: 'fit_screen', label: 'Fit', hint: 'Whole sheet', run: () => v.zoomToFit() });
+    items.push({ icon: 'description', label: 'Sheets', hint: `${T.sheetList.length} sheets`, run: () => { M.ctx = sheetItems(); return { keep: true }; } });
+    return { title: 'Drawing', sub: 'Classes &amp; view', items };
+  }
+
+  function sheetItems() {
+    const items = T.sheetList.map((s) => ({
+      icon: s.kind === 'elevation' ? 'vertical_split' : 'account_tree', label: s.id, sub: s.id === v.sheet ? 'current' : (s.kind === 'elevation' ? 'elevation' : 'schematic'),
+      cur: s.id === v.sheet, hint: (s.title || s.id).replace(/^\w+\s*-\s*/, ''),
+      run: () => v.setSheet(s.id),
+    }));
+    items.push({ icon: 'arrow_back', label: 'Back', hint: 'Classes &amp; view', run: () => { M.ctx = canvasItems(); return { keep: true }; } });
+    return { title: 'Sheets', sub: sheetTitle(v.sheet).split(' · ')[0] + ' open', items };
+  }
+
+  function contextFor(hit) {
+    if (hit && (hit.kind === 'cable' || hit.kind === 'port')) return cableItems(hit.kind === 'cable' ? hit.id : hit.cable);
+    if (hit && hit.kind === 'device') return deviceItems(hit.tag);
+    return canvasItems();
+  }
+
+  // annulus sector path
+  function sector(cx, cy, a0, a1) {
+    const p = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)].map((n) => n.toFixed(2)).join(',');
+    const large = a1 - a0 > Math.PI ? 1 : 0;
+    return `M${p(R1, a0)}A${R1},${R1} 0 ${large} 1 ${p(R1, a1)}L${p(R0, a1)}A${R0},${R0} 0 ${large} 0 ${p(R0, a0)}Z`;
+  }
+
+  function openMenu(x, y, hit, holdId) {
+    closeMenu(true);
+    const W = host.clientWidth, H = host.clientHeight, m = 6;
+    const cx = Math.max(R1 + m, Math.min(W - R1 - m, x)), cy = Math.max(R1 + m, Math.min(H - R1 - m, y));
+    M = { x, y, cx, cy, hit, holdId, hov: -1, down: -1, moved: false, ctx: contextFor(hit) };
+    M.el = document.createElement('div');
+    M.el.className = 'rm';
+    M.el.style.cssText = `left:${cx}px;top:${cy}px;width:${R1 * 2}px;height:${R1 * 2}px`;
+    catcher.innerHTML = '';
+    const dot = document.createElement('div');
+    dot.className = 'rm-dot'; dot.style.left = x + 'px'; dot.style.top = y + 'px';
+    catcher.appendChild(dot);
+    catcher.appendChild(M.el);
+    catcher.classList.add('on');
+    drawMenu();
+    requestAnimationFrame(() => M && M.el.classList.add('on'));
+    if (hit) v.peek(hit.kind === 'port' ? { kind: 'cable', id: hit.cable } : hit);
+    if (navigator.vibrate) try { navigator.vibrate(8); } catch (e) {}
+    if (!coached) { coached = true; try { localStorage.setItem('vt2.coached', '1'); } catch (e) {} renderStatus(); }
+  }
+
+  function drawMenu() {
+    if (!M) return;
+    if (M.ctx.items.some((it) => it.letter)) M.ctx = Object.assign(canvasItems(), {});   // class states may have changed
+    else if (M.ctx.title === 'Sheets') M.ctx = Object.assign(sheetItems(), { items: sheetItems().items });
+    const its = M.ctx.items, n = its.length, per = (Math.PI * 2) / n, C = R1;
+    const rm = (R0 + R1) / 2 + 2;
+    const arc = rm * per;
+    let svg = `<svg width="${R1 * 2}" height="${R1 * 2}" viewBox="0 0 ${R1 * 2} ${R1 * 2}">`;
+    let labels = '';
+    its.forEach((it, i) => {
+      const a = -Math.PI / 2 + i * per;
+      const cls = 'rm-w' + (it.done ? ' done' : i === M.hov ? ' hov' : it.off ? ' off' : '');
+      svg += `<path class="${cls}" d="${sector(C, C, a - per / 2, a + per / 2)}"/>`;
+      const lx = C + rm * Math.cos(a), ly = C + rm * Math.sin(a);
+      const w = Math.min(arc - 6, R1 - R0 - 4);
+      const lc = 'rm-l' + (it.done ? ' done' : i === M.hov ? ' hov' : '') + (it.off ? ' off' : '') + (it.cur ? ' cur' : '');
+      const top = it.letter ? `<span class="lt">${esc(it.letter)}</span>` : `<span class="msi">${it.icon}</span>`;
+      const sub = it.letter ? `<span class="st">${it.off ? 'hidden' : esc(it.label)}</span>` : (it.sub ? `<span class="st">${esc(it.sub)}</span>` : '');
+      labels += `<div class="${lc}" style="left:${lx.toFixed(1)}px;top:${ly.toFixed(1)}px;width:${w.toFixed(0)}px">${top}${it.letter ? '' : `<span>${esc(it.label)}</span>`}${sub}</div>`;
+    });
+    svg += `<circle class="rm-hub" cx="${C}" cy="${C}" r="${R0 - 3}"/></svg>`;
+    const h = M.hov >= 0 ? its[M.hov] : null;
+    const ct = h ? (h.letter ? `${h.letter} · ${h.label}` : h.label) : M.ctx.title;
+    const ch = h ? h.hint : M.ctx.sub;
+    const centre = `<div class="rm-c" style="left:${C}px;top:${C}px;width:${(R0 - 6) * 2}px"><span class="t">${esc(ct)}</span>${ch ? `<span class="h">${h ? esc(ch) : ch}</span>` : ''}</div>`;
+    M.el.innerHTML = svg + labels + centre;
+    M.el.querySelector('.rm-c .h') && fitHint(M.el.querySelector('.rm-c'));
+  }
+  // centre hint must stay inside the hub: trim long text (e.g. full cable label)
+  function fitHint(c) {
+    const h = c.querySelector('.h');
+    if (h.textContent.length > 46) h.textContent = h.textContent.slice(0, 44) + '…';
+  }
+
+  function itemAt(px, py, slack) {
+    if (!M) return -1;
+    const dx = px - M.cx, dy = py - M.cy, d = Math.hypot(dx, dy);
+    if (d < R0 || d > R1 + (slack || 0)) return -1;
+    const n = M.ctx.items.length, per = 360 / n;
+    const a = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
+    return Math.round(a / per) % n;
+  }
+
+  function closeMenu(silent) {
+    if (!M) return;
+    const el = M.el;
+    M = null;
+    catcher.classList.remove('on');
+    el.remove();
+    catcher.innerHTML = '';
+    v.unpeek();
+  }
+
+  let busy = false;
+  async function pick(i) {
+    if (!M || busy) return;
+    const it = M.ctx.items[i];
+    if (!it) return;
+    busy = true;
+    let r;
+    try { r = await it.run(it); } finally { busy = false; }
+    if (!M) return;
+    if (r && r.keep) {
+      M.hov = -1; M.down = -1; M.holdId = null;
+      drawMenu();
+      if (typeof r.keep === 'number') setTimeout(() => closeMenu(), r.keep);
+      return;
+    }
+    closeMenu();
+  }
+
+  const localPt = (e) => { const r = host.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+
+  // capture phase on the host: remember the pointer that may become a long-press, and keep
+  // secondary mouse buttons away from the engine (right-click must not select)
+  host.addEventListener('pointerdown', (e) => {
+    if (M) return;
+    lastDown = { id: e.pointerId, type: e.pointerType, button: e.button };
+    if (e.pointerType === 'mouse' && e.button !== 0) e.stopPropagation();
+  }, true);
+
+  v.on('longpress', ({ x, y, hit }) => {
+    const id = lastDown && lastDown.id;
+    // hand the pointer from the engine to the menu: end its pan so dragging onto a wedge doesn't move the drawing
+    if (id != null) {
+      try { v.svg.dispatchEvent(new PointerEvent('pointercancel', { pointerId: id, bubbles: true, pointerType: lastDown.type })); } catch (e) {}
+      try { if (v.svg.hasPointerCapture(id)) v.svg.releasePointerCapture(id); } catch (e) {}
+    }
+    openMenu(x, y, hit, id);
+  });
+
+  host.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    if (M || (lastDown && lastDown.type !== 'mouse')) return;
+    const [x, y] = localPt(e);
+    openMenu(x, y, v.hitTest(x, y), (e.buttons & 2) && lastDown ? lastDown.id : null);
+  });
+
+  // menu interaction: drag-and-release (marking menu) or tap
+  window.addEventListener('pointermove', (e) => {
+    if (!M) return;
+    const [px, py] = localPt(e);
+    const holding = e.pointerId === M.holdId;
+    if (holding && Math.hypot(px - M.x, py - M.y) > 12) M.moved = true;
+    if (holding || e.pointerType === 'mouse' || M.down >= 0) {
+      const i = itemAt(px, py, holding ? 60 : 0);
+      if (i !== M.hov && (holding ? M.moved : true)) { M.hov = i; drawMenu(); }
+    }
+  });
+  catcher.addEventListener('pointerdown', (e) => {
+    if (!M || e.pointerId === M.holdId) return;
+    e.preventDefault();
+    const [px, py] = localPt(e);
+    const i = itemAt(px, py, 0);
+    if (i < 0) { closeMenu(); return; }      // tap on the hub or outside the ring closes it
+    M.down = i; M.hov = i; drawMenu();
+  });
+  window.addEventListener('pointerup', (e) => {
+    if (!M) return;
+    const [px, py] = localPt(e);
+    if (e.pointerId === M.holdId) {
+      M.holdId = null;
+      if (!M.moved) { M.hov = -1; drawMenu(); return; }   // released in place: menu stays open for a tap
+      const i = itemAt(px, py, 60);
+      if (i >= 0) pick(i); else closeMenu();
+      return;
+    }
+    if (M.down >= 0) {
+      const i = itemAt(px, py, 0), d = M.down;
+      M.down = -1;
+      if (i === d) pick(i); else { M.hov = -1; drawMenu(); }
+    }
+  });
+  window.addEventListener('pointercancel', (e) => { if (M && e.isTrusted && e.pointerId === M.holdId) { M.holdId = null; M.hov = -1; drawMenu(); } });
+  window.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (M) closeMenu(); else if (v.selected) { portsTag = null; v.clear(); }
+  });
+
+  // the pill's sheet name opens the Sheets ring right under it
+  $('#proj').addEventListener('click', () => {
+    const r = $('#proj').getBoundingClientRect(), hr = host.getBoundingClientRect();
+    openMenu(r.left - hr.left + 40, 0, null, null);
+    M.ctx = sheetItems(); drawMenu();
+  });
+
+  window.__vt2 = { openMenu, closeMenu, get menu() { return M; }, itemAt };
+  document.title = 'Option 2 · Press & Hold — SKS Visio Trace';
+})();
+</script>
+</body>
+</html>
