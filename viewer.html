@@ -644,11 +644,11 @@
   $('zFit').onclick = () => v.zoomToFit();
 
   // ---------------------------------------------------------------- deep links: #AVS01/cable/V002
-  function syncHash() {
+  let syncHash = function () {
     const s = S.sel;
     const part = !s ? '' : s.kind === 'cable' || s.kind === 'port' ? '/cable/' + (s.cable || s.id) : s.kind === 'device' ? '/unit/' + s.tag : s.kind === 'room' ? '/room/' + s.id : s.kind === 'symbol' ? '/unit/' + s.tag + '@' + s.room : '';
     history.replaceState(null, '', '#' + v.sheet + part);
-  }
+  };
   async function fromHash() {
     const m = location.hash.slice(1).split('/');
     const sheet = T.sheets[m[0]] ? m[0] : 'AVS01';
@@ -661,6 +661,11 @@
     } else if (m[1] === 'room' && m[2]) selectRoom(m[2], true);
   }
   window.v = v; window.T = T; window.viewerSelect = select; window.viewerOpen = openSheet;
+  let lastHash = '';
+  const _sync = syncHash;
+  syncHash = function () { _sync(); lastHash = location.hash; };
+  // a pasted or followed deep link on an open viewer only changes the hash
+  addEventListener('hashchange', () => { if (location.hash !== lastHash) { lastHash = location.hash; fromHash(); } });
   await fromHash();
   document.title = 'Drawings · ' + T.project.number + ' · SKS';
   document.body.dataset.ready = '1';
