@@ -304,18 +304,33 @@
       if (sheetG[id]) return sheetG[id];
       const s = T.sheets[id];
       const g = el('g', { class: 'vt-sheet', 'data-sheet': id, style: 'display:none' }, vp);
-      el('rect', { x: 0, y: 0, width: s.w, height: s.h, class: 'vt-paper' }, g);
+      let tiles = null;
+      {
+        // image tile pyramid (tools/build_tiles.py): the GPU draws decoded images; the svg on top
+        // only carries highlights, so a tap repaints a few lines instead of the whole drawing
+        try { tiles = await (await fetch('tiles/' + id + '/meta.json')).json(); } catch (e) { tiles = null; }
+      }
+      if (!tiles) el('rect', { x: 0, y: 0, width: s.w, height: s.h, class: 'vt-paper' }, g);
+      if (tiles) {
+        const box = document.createElement('div');
+        box.className = 'vt-tiles';
+        box.style.display = 'none';
+        stage.insertBefore(box, draw);
+        tiles.box = box; tiles.els = {}; tiles.level = -1;
+        tiles.have = Object.fromEntries(Object.entries(tiles.have).map(([L, list]) => [L, new Set(list)]));
+        // level 0 is always present underneath, so there is never a blank sheet while finer tiles load
+        placeLevel(tiles, id, 0, null);
+      }
       if (s.native) {
-        // drawn sheets with live layer groups (the plan) are inlined so layers can be toggled
-        const txt = await (await fetch('sheets/' + id + '.svg')).text();
+        // drawn sheets with live layer groups (the plan) inline only those groups; the static rest is tiled
+        const txt = await (await fetch('sheets/' + id + (tiles ? '-layers' : '') + '.svg')).text();
         const doc = new DOMParser().parseFromString(txt, 'image/svg+xml');
         const base = document.importNode(doc.documentElement, true);
         base.setAttribute('width', s.w); base.setAttribute('height', s.h);
         base.setAttribute('class', 'vt-base');
         g.appendChild(base);
-      } else {
-        // the PDF export is never edited in place (highlights and knock-outs sit on top), so it goes in
-        // as one image: a single display item instead of ~6k glyph nodes, decoded off the main thread
+      } else if (!tiles) {
+        // fallback when a sheet has no tiles: the PDF export as one image element
         const base = el('image', { href: 'sheets/' + id + '.svg', x: 0, y: 0, width: s.w, height: s.h, preserveAspectRatio: 'none', class: 'vt-base' }, g);
         await new Promise((res) => { base.addEventListener('load', res, { once: true }); base.addEventListener('error', res, { once: true }); setTimeout(res, 4000); });
       }
@@ -327,7 +342,7 @@
       const veil = el('rect', { x: 0, y: 0, width: s.w, height: s.h, class: 'vt-veil', mask: `url(#${maskId})` }, g);
       const glow = el('g', { class: 'vt-glow' }, g);
       const peekG = el('g', { class: 'vt-peek' }, g);
-      sheetG[id] = { g, ko, holes, veil, glow, peekG, s };
+      sheetG[id] = { g, ko, holes, veil, glow, peekG, s, tiles };
       buildKnockout(id);
       return sheetG[id];
     }
@@ -475,6 +490,64 @@
       f.devices.forEach((tag) => devBoxes(tag, s).slice(0, 1).forEach((b) => el('rect', { x: b[0] - 5, y: b[1] - 5, width: b[2] + 10, height: b[3] + 10, rx: 4, class: 'peek-dev' }, G.peekG)));
     }
 
+    // ---------- tiles: percentage-positioned inside a box sized to the sheet, so a commit only moves the box
+    function placeLevel(t, id, L, want) {
+      const W = t.baseW * Math.pow(2, L), H = Math.ceil(W * t.h / t.w), T_ = t.tile;
+      const have = t.have[String(L)] || new Set();
+      const keep = new Set();
+      const cols = Math.ceil(W / T_), rows = Math.ceil(H / T_);
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        if (want && (c < want[0] || c > want[2] || r < want[1] || r > want[3])) continue;
+        const key = c + '_' + r;
+        if (!have.has(key)) continue;
+        const k = L + '/' + key;
+        keep.add(k);
+        if (t.els[k]) continue;
+        const im = new Image();
+        im.decoding = 'async';
+        im.className = 'vt-tile' + (L === 0 ? ' base' : '');
+        im.style.left = (c * T_ / W * 100) + '%'; im.style.top = (r * T_ / H * 100) + '%';
+        im.style.width = (T_ / W * 100) + '%'; im.style.height = (T_ / H * 100) + '%';
+        im.style.zIndex = L;
+        im.onload = () => im.classList.add('on');
+        im.src = 'tiles/' + id + '/' + L + '/' + key + '.webp';
+        t.box.appendChild(im);
+        t.els[k] = im;
+      }
+      return keep;
+    }
+    function updateTiles(mw, mh) {
+      const G = sheetG[state.sheet];
+      if (!G || !G.tiles) return;
+      const t = G.tiles, s = G.s;
+      const box = t.box;
+      box.style.left = (cam.x + mw) + 'px'; box.style.top = (cam.y + mh) + 'px';
+      box.style.width = (t.w * cam.k) + 'px'; box.style.height = (t.h * cam.k) + 'px';
+      const dpr = Math.min(3, window.devicePixelRatio || 1);
+      const L = Math.max(0, Math.min(t.levels - 1, Math.ceil(Math.log2(Math.max(1e-6, cam.k * dpr * t.w / t.baseW)))));
+      if (L === 0) { cull(t, new Set(), 0); return; }
+      const W = t.baseW * Math.pow(2, L), H = Math.ceil(W * t.h / t.w), per = W / t.w;
+      // visible world rect (plus the painted margin), in tile indices
+      const x0 = (-mw - cam.x) / cam.k, y0 = (-mh - cam.y) / cam.k, x1 = (vw + mw - cam.x) / cam.k, y1 = (vh + mh - cam.y) / cam.k;
+      const want = [Math.floor(x0 * per / t.tile), Math.floor(y0 * per / t.tile), Math.floor(x1 * per / t.tile), Math.floor(y1 * per / t.tile)];
+      const keep = placeLevel(t, state.sheet, L, want);
+      cull(t, keep, L);
+    }
+    // drop tiles of other levels once this level's tiles are in (level 0 always stays)
+    function cull(t, keep, L) {
+      const pending = [...keep].some((k) => t.els[k] && !t.els[k].classList.contains('on'));
+      Object.keys(t.els).forEach((k) => {
+        const lv = +k.split('/')[0];
+        if (lv === 0 || keep.has(k)) return;
+        if (lv === L) { t.els[k].remove(); delete t.els[k]; return; }        // same level, off screen
+        if (!pending) { t.els[k].remove(); delete t.els[k]; }               // other level, once replaced
+      });
+      if (pending) {
+        clearTimeout(t.cullT);
+        t.cullT = setTimeout(() => { if (sheetG[state.sheet] && sheetG[state.sheet].tiles === t) cull(t, keep, L); }, 250);
+      }
+    }
+
     // ---------- camera
     const MARGIN = 0.5;                 // painted margin around the viewport, as a fraction of its size
     let committed = null, vw = 0, vh = 0, settleT = 0, lastCommit = 0, raf = 0;
@@ -491,6 +564,7 @@
       draw.setAttribute('viewBox', `${((-mw - cam.x) / cam.k).toFixed(3)} ${((-mh - cam.y) / cam.k).toFixed(3)} ${((vw + 2 * mw) / cam.k).toFixed(3)} ${((vh + 2 * mh) / cam.k).toFixed(3)}`);
       committed = Object.assign({}, cam);
       lastCommit = performance.now();
+      updateTiles(mw, mh);
     }
     function applyCam() {
       if (raf) return;
@@ -753,6 +827,9 @@
     svg.addEventListener('gesturestart', (e) => { e.preventDefault(); gk = 1; });
     svg.addEventListener('gesturechange', (e) => {
       e.preventDefault();
+      // iOS Safari fires these *and* pointer events for a two-finger pinch; the pointer path already
+      // handles it, so only use gesture events for Mac trackpads (no active pointers)
+      if (ptrs.size) return;
       const p = local(e), k = clampK(cam.k * e.scale / gk), wx = (p.x - cam.x) / cam.k, wy = (p.y - cam.y) / cam.k;
       cam = { k, x: p.x - wx * k, y: p.y - wy * k }; gk = e.scale; applyCam();
     });
@@ -765,9 +842,10 @@
       o = o || {};
       if (state.sheet) cams[state.sheet] = Object.assign({}, cam);
       const G = await ensureSheet(id);
-      Object.values(sheetG).forEach((x) => (x.g.style.display = 'none'));
+      Object.values(sheetG).forEach((x) => { x.g.style.display = 'none'; if (x.tiles) x.tiles.box.style.display = 'none'; });
       state.sheet = id;
       G.g.style.display = '';
+      if (G.tiles) G.tiles.box.style.display = '';
       buildKnockout(id);
       render(); renderPeek();
       if (cams[id] && !o.fit) { cam = cams[id]; applyCam(); }
