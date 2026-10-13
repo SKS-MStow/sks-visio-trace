@@ -339,6 +339,7 @@
     B: VT.create(T, $('#cvB'), { sheet: st.B, autoSelect: false, insets: insetsFor('B') }),
   };
   window.vA = V.A; window.vB = V.B; window.V = V;
+  setTimeout(() => { window.__app1 = { st, V, get findOn() { return findOn; }, get selectRef() { return selectRef; }, get setLayout() { return setLayout; } }; });
   await Promise.all([V.A.ready, V.B.ready]);
   ['A', 'B'].forEach((k) => { V[k].setHidden(st.hidden); });
 
@@ -784,6 +785,12 @@
     }
     if (ref.kind === 'symbol') {
       const sym = (T.sheets[sheet].symbols || []).find((x) => x.tag === ref.tag && x.room === ref.room) || {};
+      if (ref.tag === 'BEHIND' && ref.via) {
+        // found from another drawing: name the unit, not the plan note that stands for it
+        const main = `<b>${esc(ref.via)}</b><span class="tx">behind the display · room ${esc(ref.room)}</span>`;
+        const more = `<div class="meta" style="margin-top:0">${esc(mm(devInfo(ref.via, sheet, ref.room)))}</div><div class="meta">Concealed on the SKS tray behind the display, with ${(sym.tags || []).length - 1} other units.</div><div class="acts">${findBtns(s)}</div>`;
+        return { main, more };
+      }
       if (ref.tag === 'BEHIND') {
         const main = `<b>Behind display</b><span class="tx">Room ${esc(ref.room)} · ${(sym.tags || []).length} concealed units</span>`;
         const more = `<div class="plist">${(sym.tags || []).map((t) => `<div class="prow dim"><span class="pn" style="color:var(--sks-navy);font-weight:700">${t}</span><span></span><span class="to">${esc(mm(devInfo(t, sheet, ref.room)))}</span></div>`).join('')}</div><div class="acts">${findBtns(s)}</div>`;
@@ -814,14 +821,47 @@
     return out;
   }
   function findBtns(s) { return findTargets(s).map((t) => `<button class="act" data-find="${t.id}"><span class="msi">${t.icon}</span>${t.label}</button>`).join(''); }
+  // view-sensitive: Single jumps the main drawing to the target; Split / PiP use the second pane
   async function findOn(id) {
     const s = st.sel; if (!s) return;
+    if (st.layout === 'single') return findInPlace(s, id);
     const o = other(s.pane);
     if (o === 'B') st.bAuto = false;
-    if (st.layout === 'single') st.layout = 'split';
     if (V[o].sheet !== id) await setPane(o, id);
     st.expanded = false;
     apply(false); renderAll();
+  }
+  async function findInPlace(s, id) {
+    const pane = s.pane, from = V[pane].sheet, ref = s.ref;
+    const r = T.relate(ref, from, id);
+    const room = (r && r.room) || (ref.kind === 'symbol' ? ref.room : ref.kind === 'room' ? ref.id : roomOf(from));
+    const tag = ref.kind === 'device' || ref.kind === 'symbol' ? ref.tag : null;
+    const isCable = ref.kind === 'cable' || ref.kind === 'port';
+    st.expanded = false;
+    await setPane(pane, id);
+    if (pane === 'A' && st.bAuto) await setPane('B', defaultB(id));
+    const tk = kindOf(id);
+    let nref = null;
+    if (ref.kind === 'room' && tk === 'plan') nref = { kind: 'room', sheet: id, id: room };
+    else if (tag && !isCable) {
+      const tags = ref.kind === 'symbol' && r ? r.tags : [tag];
+      const t0 = tags.length === 1 ? tags[0] : null;
+      if (t0 && tk === 'schematic' && T.deviceOn(id, t0)) nref = { kind: 'device', tag: t0 };
+      else if (t0 && tk === 'elevation' && (T.sheets[id].marks || []).some((m) => m.tag === t0)) nref = { kind: 'device', tag: t0 };
+      else if (t0 && tk === 'plan') {
+        const sym = (T.sheets[id].symbols || []).find((x) => (!room || x.room === room) && (x.tag === t0 || (x.tags || []).includes(t0)));
+        if (sym) nref = { kind: 'symbol', sheet: id, tag: sym.tag, room: sym.room, via: t0 };
+      }
+    }
+    if (nref) { selectRef(pane, nref, { zoom: true }); renderAll(); return; }
+    // a cable's two ends, a whole room, or something not drawn here: light what there is and say so
+    st.sel = null; apply(false);
+    const f = r && r.focus, any = f && (f.devices.length || (f.boxes || []).length || f.outline);
+    if (any) V[pane].focus(f, { zoom: true, zoomOpts: { maxK: MAXK[tk] } });
+    const miss = ((r && r.missing) || []).filter((t) => t !== 'BEHIND');
+    st.notes[pane] = miss.length ? `${miss.length > 3 ? miss.slice(0, 2).join(', ') + ` +${miss.length - 2} more` : miss.join(', ')} ${miss.length === 1 ? "isn't" : "aren't"} on ${KNAME[tk]}`
+      : isCable ? `Both ends of ${cableOf(ref).id} on ${KNAME[tk]}` : '';
+    renderAll(); renderLabels(); layout();
   }
 
   function renderSel() {
