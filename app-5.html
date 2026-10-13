@@ -302,6 +302,7 @@
     p.rel = false;
     p.depth = o.depth || S.depth;
     S.active = p.key;
+    S.flash = '';
     if (!ref) S.expanded = false;
     applyFocus(p, o.zoom);
     relateFrom(p, o.relZoom !== false);
@@ -566,7 +567,9 @@
     }
     if (ref.kind === 'symbol') {
       const sym = (T.sheets[sheet].symbols || []).find((x) => x.tag === ref.tag && x.room === ref.room);
-      return { html: `<b>${esc(ref.tag)}</b> <span class="mu">· ${esc(sym ? sym.kind : '')} · Room ${esc(ref.room)}</span>` };
+      // found via another drawing: name the unit, not the plan note that stands for it
+      if (ref.via && ref.via !== ref.tag) return { html: `<b>${esc(ref.via)}</b> <span class="mu">· ${sym && sym.tags ? 'behind the display' : esc(sym ? sym.kind : '')} · Room ${esc(ref.room)}</span>` };
+      return { html: `<b>${esc(ref.tag === 'BEHIND' ? 'Behind display' : ref.tag)}</b> <span class="mu">· ${esc(sym ? sym.kind : '')} · Room ${esc(ref.room)}</span>` };
     }
     if (ref.kind === 'room') {
       const r = (T.sheets[sheet].rooms || []).find((x) => x.id === ref.id);
@@ -578,12 +581,16 @@
   function renderSel() {
     const p = panes[S.active].sel ? panes[S.active] : (A.sel ? A : B.sel && S.layout !== 'single' ? B : null);
     const el = $('sel'), main = $('selMain');
-    const show = !!p || !S.coached;
+    const show = !!p || !S.coached || !!S.flash;
     const was = el.classList.contains('on');
     el.classList.toggle('on', show);
     el.classList.toggle('open', !!p && S.expanded);
     $('selClear').style.display = p ? '' : 'none';
-    if (!p) {
+    if (!p && S.flash) {
+      el.classList.add('on');
+      main.innerHTML = `<span class="msi" style="color:var(--sks-purple)">my_location</span><span class="txt">${esc(S.flash)}</span>`;
+      $('selDetail').innerHTML = '';
+    } else if (!p) {
       main.innerHTML = `<span class="coach"><span class="msi" style="vertical-align:-5px">touch_app</span> <em>Tap</em> to trace · <em>hold</em> for more</span>`;
       main.setAttribute('aria-label', 'Tip');
       $('selDetail').innerHTML = '';
@@ -642,11 +649,13 @@
   const findKinds = (k) => ['schematic', 'elevation', 'plan'].filter((x) => x !== k);
   async function findOn(p, ref, kind, o) {
     o = o || {};
+    if (!ref) return;
     const q = other(p);
     const room = ref && ref.room || (J.pages[p.v.sheet] || {}).room || '2B';
     const target = kind === 'plan' ? 'AVF01' : (T.counterpart(p.v.sheet, kind, room) || J.types.find((t) => t.id === kind).pages[0]);
+    // view-sensitive: in Single the main drawing jumps there; in Split / PiP the second pane does
+    if (S.layout === 'single') return findInPlace(p, ref, kind, target, o);
     if (q === B) S.cmpPinned = true;
-    if (S.layout !== 'split') setLayout('split');
     await openSheet(q, target, { keepCmp: true });
     if (o.trace && T.kindOf(target) === 'schematic' && tagOf(ref) && T.deviceOn(target, tagOf(ref))) {
       select(q, { kind: 'device', tag: tagOf(ref) }, { depth: 'all', zoom: true });
@@ -654,6 +663,36 @@
     }
     if (p.sel !== ref) select(p, ref, { relZoom: true }); else relateFrom(p, true);
     S.active = p.key; renderSel(); syncHash();
+  }
+  // Single view: open the target drawing in this pane and select the same thing there
+  async function findInPlace(p, ref, kind, target, o) {
+    if (!ref) return;
+    const from = p.v.sheet, tag = tagOf(ref), c = cableOf(ref);
+    const r = T.relate(ref, from, target);
+    const room = (r && r.room) || ref.room || (J.pages[from] || {}).room;
+    await openSheet(p, target, { keepCmp: true });
+    const tk = T.kindOf(target);
+    let nref = null;
+    if (tag && !c) {
+      if (tk === 'schematic' && T.deviceOn(target, tag)) nref = { kind: 'device', tag };
+      else if (tk === 'elevation' && (T.sheets[target].marks || []).some((m) => m.tag === tag)) nref = { kind: 'device', tag };
+      else if (tk === 'plan') {
+        const sym = (T.sheets[target].symbols || []).find((x) => (!room || x.room === room) && (x.tag === tag || (x.tags || []).includes(tag)));
+        if (sym) nref = { kind: 'symbol', sheet: target, tag: sym.tag, room: sym.room, via: tag };
+      }
+    }
+    if (o.trace && tk === 'schematic' && nref) { select(p, nref, { depth: 'all', zoom: true }); return; }
+    if (nref) select(p, nref, { zoom: true });
+    else {
+      // a cable's two ends, or something not drawn here: light what there is and say so
+      select(p, null);
+      const f = r && r.focus, has = f && ((f.devices && f.devices.length) || (f.boxes && f.boxes.length));
+      if (has) { p.v.focus(f, { zoom: true, zoomOpts: { maxK: MAXK[tk] } }); p.rel = true; }
+    }
+    const miss = (r && r.missing) || [];
+    S.flash = miss.length ? `${miss.slice(0, 2).join(', ')}${miss.length > 2 ? ' +' + (miss.length - 2) : ''} ${miss.length > 1 ? "aren't" : "isn't"} on the ${NOUN[tk]}`
+      : !nref && c ? `Both ends of ${c.id} on the ${NOUN[tk]}` : '';
+    renderSel(); syncHash();
   }
   function dominantClass(sheet, tag) {
     const n = {};

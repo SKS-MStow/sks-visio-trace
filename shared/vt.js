@@ -281,10 +281,20 @@
     const emit = (ev, d) => (listeners[ev] || []).forEach((fn) => fn(d));
 
     container.classList.add('vt-root');
+    /* Rendering model (speed): the drawing is painted into an oversized "stage" layer that the GPU
+       moves during a drag or pinch, so a gesture never repaints the vector drawing. When the camera
+       settles the stage is re-painted once, crisp, cropped to the visible area plus a margin via the
+       SVG viewBox, so paint cost tracks the screen size, not the zoom level. A transparent full-size
+       svg on top receives input (and keeps v.svg's old meaning for callers). */
+    const stage = document.createElement('div');
+    stage.className = 'vt-stage';
+    container.appendChild(stage);
+    const draw = el('svg', { class: 'vt-draw', width: '100%', height: '100%', preserveAspectRatio: 'none' });
+    stage.appendChild(draw);
+    const defs = el('defs', null, draw);
+    const vp = el('g', { class: 'vt-vp' }, draw);
     const svg = el('svg', { class: 'vt-svg', width: '100%', height: '100%' });
     container.appendChild(svg);
-    const defs = el('defs', null, svg);
-    const vp = el('g', { class: 'vt-vp' }, svg);
     const sheetG = {}, state = { sheet: null, hidden: new Set(), layersOff: {}, zones: true, clouds: true, focus: null, peek: null, selected: null };
     const cams = {};
     let cam = { k: 0.3, x: 0, y: 0 };
@@ -295,12 +305,20 @@
       const s = T.sheets[id];
       const g = el('g', { class: 'vt-sheet', 'data-sheet': id, style: 'display:none' }, vp);
       el('rect', { x: 0, y: 0, width: s.w, height: s.h, class: 'vt-paper' }, g);
-      const txt = await (await fetch('sheets/' + id + '.svg')).text();
-      const doc = new DOMParser().parseFromString(txt, 'image/svg+xml');
-      const base = document.importNode(doc.documentElement, true);
-      base.setAttribute('width', s.w); base.setAttribute('height', s.h);
-      base.setAttribute('class', 'vt-base');
-      g.appendChild(base);
+      if (s.native) {
+        // drawn sheets with live layer groups (the plan) are inlined so layers can be toggled
+        const txt = await (await fetch('sheets/' + id + '.svg')).text();
+        const doc = new DOMParser().parseFromString(txt, 'image/svg+xml');
+        const base = document.importNode(doc.documentElement, true);
+        base.setAttribute('width', s.w); base.setAttribute('height', s.h);
+        base.setAttribute('class', 'vt-base');
+        g.appendChild(base);
+      } else {
+        // the PDF export is never edited in place (highlights and knock-outs sit on top), so it goes in
+        // as one image: a single display item instead of ~6k glyph nodes, decoded off the main thread
+        const base = el('image', { href: 'sheets/' + id + '.svg', x: 0, y: 0, width: s.w, height: s.h, preserveAspectRatio: 'none', class: 'vt-base' }, g);
+        await new Promise((res) => { base.addEventListener('load', res, { once: true }); base.addEventListener('error', res, { once: true }); setTimeout(res, 4000); });
+      }
       const ko = el('g', { class: 'vt-knockout' }, g);
       const maskId = 'vt-mask-' + uid + '-' + id;
       const mask = el('mask', { id: maskId, maskUnits: 'userSpaceOnUse', maskContentUnits: 'userSpaceOnUse', x: 0, y: 0, width: s.w, height: s.h }, defs);
@@ -458,12 +476,37 @@
     }
 
     // ---------- camera
-    let raf = 0;
+    const MARGIN = 0.5;                 // painted margin around the viewport, as a fraction of its size
+    let committed = null, vw = 0, vh = 0, settleT = 0, lastCommit = 0, raf = 0;
+    function commit() {
+      clearTimeout(settleT);
+      const r = container.getBoundingClientRect();
+      vw = r.width; vh = r.height;
+      if (!vw || !vh) return;
+      const mw = vw * MARGIN, mh = vh * MARGIN;
+      stage.style.left = -mw + 'px'; stage.style.top = -mh + 'px';
+      stage.style.width = vw + 2 * mw + 'px'; stage.style.height = vh + 2 * mh + 'px';
+      stage.style.transformOrigin = `${mw}px ${mh}px`;
+      stage.style.transform = '';
+      draw.setAttribute('viewBox', `${((-mw - cam.x) / cam.k).toFixed(3)} ${((-mh - cam.y) / cam.k).toFixed(3)} ${((vw + 2 * mw) / cam.k).toFixed(3)} ${((vh + 2 * mh) / cam.k).toFixed(3)}`);
+      committed = Object.assign({}, cam);
+      lastCommit = performance.now();
+    }
     function applyCam() {
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
-        vp.setAttribute('transform', `translate(${cam.x.toFixed(2)},${cam.y.toFixed(2)}) scale(${cam.k.toFixed(5)})`);
+        if (!committed) { commit(); emit('view', { k: cam.k }); return; }
+        // move the already-painted stage on the compositor: no repaint during gestures
+        const sc = cam.k / committed.k, tx = cam.x - committed.x * sc, ty = cam.y - committed.y * sc;
+        stage.style.transform = `translate3d(${tx.toFixed(2)}px,${ty.toFixed(2)}px,0) scale(${sc.toFixed(5)})`;
+        const mw = vw * MARGIN, mh = vh * MARGIN;
+        const exposed = (-mw) * sc + tx > 0 || (vw + mw) * sc + tx < vw || (-mh) * sc + ty > 0 || (vh + mh) * sc + ty < vh;
+        const blurry = sc > 1.8 || sc < 0.55;
+        // repaint mid-gesture only when blank edges show or the scale has drifted too far (throttled)
+        if ((exposed || blurry) && performance.now() - lastCommit > 450) commit();
+        clearTimeout(settleT);
+        settleT = setTimeout(commit, 140);
         emit('view', { k: cam.k });
       });
     }
@@ -713,9 +756,9 @@
       const p = local(e), k = clampK(cam.k * e.scale / gk), wx = (p.x - cam.x) / cam.k, wy = (p.y - cam.y) / cam.k;
       cam = { k, x: p.x - wx * k, y: p.y - wy * k }; gk = e.scale; applyCam();
     });
-    window.addEventListener('resize', applyCam);
+    window.addEventListener('resize', () => { committed = null; applyCam(); });
     // panes change size without a window resize (split dividers, sheets); keep the camera in step
-    if (window.ResizeObserver) new ResizeObserver(() => applyCam()).observe(container);
+    if (window.ResizeObserver) new ResizeObserver(() => { committed = null; applyCam(); }).observe(container);
 
     // ---------- public
     async function setSheet(id, o) {

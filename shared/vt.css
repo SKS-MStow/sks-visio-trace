@@ -39,8 +39,10 @@ h1, h2, h3 { font-family: var(--font-head); margin: 0; }
 
 /* ---------- viewer */
 .vt-root { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; background: var(--bg); }
-.vt-svg { display: block; width: 100%; height: 100%; }
-.vt-paper { fill: #fff; filter: drop-shadow(0 2px 10px rgba(31, 51, 92, .16)); }
+.vt-svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.vt-stage { position: absolute; will-change: transform; contain: strict; }
+.vt-draw { display: block; width: 100%; height: 100%; pointer-events: none; }
+.vt-paper { fill: #fff; stroke: #cfd8e0; stroke-width: 1px; vector-effect: non-scaling-stroke; }
 .ko-line { fill: none; stroke: #fff; stroke-width: 5.5; stroke-linejoin: round; stroke-linecap: round; }
 .ko-thick { stroke-width: 6; }
 .ko-box { fill: #fff; stroke: none; }
@@ -60,8 +62,6 @@ h1, h2, h3 { font-family: var(--font-head); margin: 0; }
 .glow-port { fill: var(--sks-purple); fill-opacity: .32; stroke: var(--sks-purple); stroke-width: 1.4; mix-blend-mode: multiply; pointer-events: none; }
 .peek-line { fill: none; stroke: var(--sks-purple); stroke-width: 7; stroke-opacity: .35; stroke-linecap: round; stroke-linejoin: round; mix-blend-mode: multiply; pointer-events: none; }
 .peek-dev { fill: var(--sks-purple); fill-opacity: .08; stroke: var(--sks-purple); stroke-width: 1.5; stroke-dasharray: 5 4; pointer-events: none; }
-/* while the drawing moves, drop the blend effects for frame rate */
-.vt-moving .glow-line, .vt-moving .glow-chip, .vt-moving .glow-port, .vt-moving .peek-line { mix-blend-mode: normal; }
 
 /* ---------- shared UI atoms */
 .brand-bar { display: flex; align-items: center; gap: 10px; }
